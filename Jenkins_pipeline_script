@@ -1,0 +1,45 @@
+pipeline {
+  agent any
+
+  tools {
+    nodejs 'Node 21' // Name from your Global Tool Config
+  }
+
+  environment {
+    EMAIL = credentials('your-email-secret-id')    // store these in Jenkins Credentials
+    PASSWORD = credentials('your-password-secret-id')
+    USERNM = credentials('your-username-secret-id')
+  }
+
+  stages {
+    stage('Checkout Code') {
+      steps {
+        git url: 'https://github.com/md-asif-shahriar/rokomari-automation-playwright.git', branch: 'main'
+      }
+    }
+
+    stage('Install Dependencies') {
+      steps {
+        bat 'npm ci'
+      }
+    }
+
+    stage('Install Playwright Browsers') {
+      steps {
+        bat 'npx playwright install'
+      }
+    }
+
+    stage('Run Playwright Tests') {
+      steps {
+        bat 'npx playwright test tests/example2.spec.js --reporter=list'
+      }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts artifacts: 'playwright-report/**', allowEmptyArchive: true
+    }
+  }
+}
