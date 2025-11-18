@@ -16,7 +16,7 @@ const testData = {
 
   // Page titles
   titles: {
-    homePage: 'Rokomari.com - Online Book, Electronics & Super Shop in Bangladesh',
+    homePage: 'Rokomari.com | Online Shopping for Books, Electronics, Gadgets, Personal Care, Beauty Products, Lifestyle & More',
     signInPage: 'Login To Rokomari | Rokomari.com',
     searchResultPage: 'Search Page | Rokomari.com',
     bookDetailsPage: 'আহকামুন নিসা: Allama Muhammod Ataia Khamis | Rokomari.com',
@@ -24,7 +24,7 @@ const testData = {
     paymentPage: 'Shipping Address | Rokomari.com',
     confirmedOrderPage: 'Order Confirmation | Rokomari.com',
     trackOrderPage: 'Order Track | Rokomari.com',
-    myOrdersPage: 'My Orders | Rokomari.com',
+    myOrderPage: 'My Orders | Rokomari.com',
   },
 
   //Page URL paths
@@ -37,7 +37,7 @@ const testData = {
     shippingPage: '/shipping',
     confirmedOrderPage: '/order-confirmation',
     trackOrderPage: '/ordertrack',
-    myOrdersPage: '/my-orders',
+    myOrderPage: '/my-orders',
   }
 
 };

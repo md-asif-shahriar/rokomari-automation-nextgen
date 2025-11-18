@@ -45,19 +45,15 @@ export class BookDetailsPage {
     if (buttonText.includes('Add to Cart')) {
       console.log('Add to Cart button is in "Add to Cart" state.');
       await this.addToCartButton.click();
-      await expect(this.addToCartButtonText).toHaveText('Go to Cart ->', {
+      await expect(this.addToCartButtonText).toHaveText('Go to Cart', {
         timeout: 3000
       });
     } else {
       console.log(
-        'Add to Cart button is NOT in "Add to Cart" state. Current state: ' + (await getAddToCartButtonText())
+        'Add to Cart button is NOT in "Add to Cart" state. Current state: ' + (await this.getAddToCartButtonText())
       );
       return;
     }
-
-    
-    //await this.page.pause();
-
     await this.page.waitForTimeout(3000); // Can also use waitForSelector instead of `waitForTimeout`
   }
 

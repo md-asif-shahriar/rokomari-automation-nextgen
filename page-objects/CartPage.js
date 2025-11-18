@@ -52,7 +52,6 @@ export class CartPage {
   async selectProductById(productId) {
     await this.selectAllCheckbox.waitFor({ state: 'visible' });
     let isChecked = await this.selectAllCheckboxState.isChecked();
-    console.log("Is 'Select All' checkbox checked? ", isChecked);
     if (isChecked) {
       await this.selectAllCheckbox.click();
     } else {
@@ -60,8 +59,6 @@ export class CartPage {
       await this.page.waitForTimeout(2000);
       await this.selectAllCheckbox.click();
     }
-    isChecked = await this.selectAllCheckboxState.isChecked();
-    console.log("Is 'Select All' checkbox checked 2? ", isChecked);
     const productLocator = this.page.locator(
       `xpath=//*[@id="ts--cart-product-item-${productId}"]//*[contains(@class, "cartItem") and contains(@class, "checkboxContainer")]`
     );

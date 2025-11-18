@@ -11,6 +11,7 @@ export class TrackOrderPage {
   async getOrderNumber() {
     const orderNumber = await this.orderNumber.innerText();
     console.log('Order Number:', orderNumber);
+    await this.page.pause();
     return orderNumber.replace(/^.*:\s*(\d+)/, '$1').trim();
   }
 

@@ -32,7 +32,7 @@ test('Normal Order Flow (COD) - User Sign in through place order', async ({ page
   const paymentPageTitle = testData.titles.shippingPage;
   const confirmedOrderPageTitle = testData.titles.confirmedOrderPage;
   const trackOrderPageTitle = testData.titles.trackOrderPage;
-  const myOrdersPageTitle = testData.titles.myOrdersPage;
+  const myOrderPageTitle = testData.titles.myOrderPage;
 
   // Page URL paths
   const homePagePath = testData.paths.homePage;

@@ -32,7 +32,7 @@ test('Normal Order Flow (COD) - User Sign in through place order', async ({ page
   const paymentPageTitle = testData.titles.shippingPage;
   const confirmedOrderPageTitle = testData.titles.confirmedOrderPage;
   const trackOrderPageTitle = testData.titles.trackOrderPage;
-  const myOrdersPageTitle = testData.titles.myOrdersPage;
+  const myOrderPageTitle = testData.titles.myOrderPage;
 
   // Page URL paths
   const homePagePath = testData.paths.homePage;
@@ -64,7 +64,8 @@ test('Normal Order Flow (COD) - User Sign in through place order', async ({ page
   await test.step('Sign in', async () => {
     await page.goto('/login');
     await signInPage.login(email, password);
-    await expect.soft(page).toHaveTitle(cartPageTitle);
+    await page.waitForLoadState('load');
+    await expect.soft(page).toHaveTitle(homePageTitle);
     //expect(page.url()).toMatch(/\/cart/);
     //await page.pause();
   });
@@ -148,7 +149,7 @@ test('Normal Order Flow (COD) - User Sign in through place order', async ({ page
   });
 
 
-  await test.step('Check confirm order details', async () => {
+  await test.step('Checking order details at confirm order', async () => {
     expectedOrderId = await confirmedOrderPage.getOrderNumber();
     const payableTotal = await confirmedOrderPage.getPayableTotal();
     console.log(`Payable Total in confirmed order page: ${payableTotal}`);
@@ -158,32 +159,52 @@ test('Normal Order Flow (COD) - User Sign in through place order', async ({ page
     await page.waitForLoadState('load');
     await expect.soft(page).toHaveTitle(trackOrderPageTitle);
     await page.pause();
-    await page.close();
+    //await page.close();
   });
   await test.step.skip('Track Order', async () => {
     const orderNumber = await trackOrderPage.getOrderNumber();
     console.log(`Tracked Order Number: ${orderNumber}`);
+    await page.pause();
     expect(orderNumber, 'Order number in track order page should match the confirmed order page').toBe(expectedOrderId);
     const payableTotal = await trackOrderPage.getPayableTotal();
     console.log(`Payable Total in track order page: ${payableTotal}`);
+    await page.pause();
     //expect(payableTotal, 'Payable total should be same in track order page').toBe(expectedPayabaleTotal);
-    await commonOptions.clickMyOrder();
+    await commonOptions.goToMyOrder();
     await page.waitForLoadState('load');
     await expect.soft(page).toHaveTitle(myOrderPageTitle);
     await page.pause();
   });
 
-  await test.step.skip('My order', async () => {
+  await test.step.skip('My Order', async () => {
     // const orderNumber = await myOrderPage.getOrderNumber();
     // console.log(`My Order Number: ${orderNumber}`);
     // expect(orderNumber, 'Order number in my order page should match the confirmed order page').toBe(expectedOrderId);
     // const payableTotal = await trackOrderPage.getPayableTotal();
     // console.log(`Payable Total in track order page: ${payableTotal}`);
     //expect(payableTotal, 'Payable total should be same in track order page').toBe(expectedPayabaleTotal);
-    //await myOrderPage.openOrderDetails();
+    const isOrderFound = await myOrderPage.isOrderFound(expectedOrderId);
+    console.log(`Order matched in My Orders page: ${isOrderFound}`);
+    await page.pause();
+    //expect(isOrderFound, `Order ID ${expectedOrderId} should be found in My Orders`).toBeTruthy();
+    const payable = await myOrderPage.getPayableTotal();
+    console.log(`Payable Total in my order page: ${payable}`);
+    //expect(payable, 'Payable total should be same in my order page').toBe(expectedPayabaleTotal);
+    //const orderStatus = await myOrderPage.getOrderStatus();
+    //console.log(`Order Status in my order page: ${orderStatus}`);
+    await page.pause();
+  });
+  await test.step.skip('Go to track order from my orders', async () => {
     await myOrderPage.clickTrackOrder();
     await page.waitForLoadState('load');
     await expect.soft(page).toHaveTitle(trackOrderPageTitle);
+    await page.pause();
+  });
+
+  await test.step.skip('Cancel this test order', async () => {
+    await myOrderPage.cancelOrder();
+    await page.waitForLoadState('load');
+    await expect.soft(page).toHaveTitle(myOrderPageTitle);
     await page.pause();
   });
 

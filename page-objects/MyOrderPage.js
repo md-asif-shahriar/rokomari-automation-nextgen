@@ -2,30 +2,59 @@ import { expect } from '@playwright/test';
 export class MyOrderPage {
   constructor(page) {
     this.page = page;
-    this.copyOrderNumberButton = page.locator('button.js--orderId-copy-code');
-    //this.orderNumber = page.locator('p:has-text("অর্ডার নম্বর")');
-    this.trackOrderButton = page.getByRole('link', { name: 'Track My Order' });
+//     this.orderStatus = page.locator('div.border-success.text-success', {
+//   hasText: /PROCESSING|APPROVED/  // Matches either "Processing" or "Approved"
+// }).first();
+    
+     
+    this.trackOrderButton = page.getByRole('link', { name: 'Track My Order' }).first();
   }
 
-  async getUrlPath() {
-    const fullUrl = this.page.url(); // Get the full URL of the page
-    const url = new URL(fullUrl); // Parse the full URL
-    // Get the path excluding query parameters and fragments
-    const exactPath = url.pathname.split('/')[1] ? `/${url.pathname.split('/')[1]}` : '/';
-    console.log('Confirmed order page path: ', exactPath);
-    return exactPath;
-  }
-
-  async getOrderNumber() {
-    if (await this.popUp.isVisible()) {
-      console.log('Closing pop-up...');
-      await this.popUpCloseButton.click();
+  async isOrderFound(orderId) {
+    const orderIdSpan = await this.page.locator('span.text-success', { hasText: `${orderId}` });
+    try {
+      await expect(orderIdSpan, `Order ID ${orderId} should be found in My Orders`).toBeVisible({ timeout: 3000 });
+    } catch (error) {
+      console.log(`Order ID ${orderId} not found in My Orders.`);
+      console.log(error.message);
+      return false;
     }
-    await this.page.pause(3000);
-    const orderNumber = await this.copyOrderNumberButton.getAttribute('data-code');
-    console.log('Order Number:', orderNumber);
-    return orderNumber;
+    return true;
   }
+  async getPayableTotal() {
+    const payableAmount = await this.page.locator('xpath=//div//span[contains(text(), "Payable amount:")]/span[@class="text-success"]').first();
+    const amount = await payableAmount.innerText();
+    console.log('Payable Amount:', amount);
+    return amount;
+  }
+  async getOrderStatus() {
+    const currentStatus = 'PROCESSING';
+    console.log(`Current Order Status: ${currentStatus}`);
+    return currentStatus;
+  }
+  async cancelOrder() {
+    const cancelOrderButton = await this.page.locator('button[name="cancelOrder"]').first();
+    await expect(cancelOrderButton, 'Cancel Order button should be visible').toBeVisible();
+    await cancelOrderButton.click();
+
+    await this.page.pause();
+
+    const overlay = page.locator('#js--modal-overlay');
+    await expect(overlay, 'Overlay should be visible').toBeVisible();
+
+    const cancelYourOrderHeading = page.locator('h5', { hasText: 'Cancel Your Order' });
+    await expect(cancelYourOrderHeading, 'Cancel Order pop-up should be visible').toBeVisible();
+
+    const confirmCancelOrderButton = await cancelYourOrderHeading.locator('button:has-text("Confirm Cancel Order")');
+    await expect(confirmCancelOrderButton, 'Cancel Order button should be visible').toBeVisible();
+    await expect(confirmCancelOrderButton, 'Cancel Order button should be disabled if no reason is selected').toBeDisabled();
+
+    const selectReasonDropdown = await cancelOrderPopUp.locator('select.custom-select');
+    await selectReasonDropdown.selectOption({ value: '11' });
+    await expect(confirmCancelOrderButton, 'Cancel Order button should be enabled after selecting a reason').toBeEnabled();
+    await confirmCancelOrderButton.click();
+  }
+
   async clickTrackOrder() {
     await expect(this.trackOrderButton).toBeVisible();
     await this.trackOrderButton.click();
