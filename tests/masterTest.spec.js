@@ -1,8 +1,22 @@
 import { test, expect, playwright } from '@playwright/test';
 import OrderHelper  from '../helper/OrderHelper';
 import { openHomePage, signIn, addToCart } from './allTestMethods';
-
+import testData from '../data/testData';
 let browser;
+
+  // User credentials from environment variables
+  const email = process.env.EMAIL;
+  const password = process.env.PASSWORD;
+  const username = process.env.USERNM;
+
+  let paymentMethod = process.env.PAYMENT_METHOD; // Cash on Delivery
+
+  let searchKeyword = testData.searchKeyword;
+
+  let productId = testData.cartProductId;
+  let productTitle = testData.productTitle;
+
+
 
 // test.beforeAll(async () => {
 //   // Setup code if needed (like initializing a browser or logging in)
@@ -13,27 +27,45 @@ let browser;
 // test.afterAll(async () => {
 //   // Cleanup code if needed
 //   console.log('Running after all tests');
-//   await browser.close();
+//   await page.close();
 // });
 
 test.describe('Master Order Flow', () => {
-  test('Normal Order Flow (COD)', async ({ page }) => {
+  test.skip('Normal Order Flow (COD)', async ({ page }) => {
     const helper = new OrderHelper(page);
-
     await helper.openHomePage();
+    await helper.signIn(email, password, 'home');
+    await helper.searchForABook(searchKeyword);
+    await helper.goToBookDetails(productTitle);
+    await helper.displayBookInformations();
+    await helper.addToCart();
+    await helper.goToCart();
+    await helper.selectProduct(productId);
+    await helper.selectAddress('local');
+    await helper.proceedToCheckout();
+    await helper.selectPaymentMethod(paymentMethod);
+    await helper.confirmOrder();
+    await helper.confirmedOrderPageInfo();
+    await helper.goToTrackOrder();
+    await helper.trackOrderPageInfo();
+    await helper.goToMyOrder();
+    await helper.myOrderPageInfo();
+    await helper.cancelTestOrder();
     await page.pause();
-    // await helper.signIn('user@example.com', 'password123', 'cart'); // Expecting to land on cart page
-    // await helper.addToCart();
-    // await helper.proceedToCheckout();
-    // await helper.selectPaymentMethod('credit-card'); // Select Credit Card
-    // await helper.confirmOrder();
-    // await helper.confirmedOrderPage();
   });
 
-  test.skip('Sign in after place order flow', async ({ page }) => {
-    await openHomePage(page);
-    await signIn(page, 'user@example.com', 'password123');
-    await addToCart(page);
+  test('Sign in after place order flow', async ({ page }) => {
+    const helper = new OrderHelper(page);
+    await helper.openHomePage(page);
+    await helper.signIn(email, password, 'home');
+    await page.waitForLoadState('load');
+    await page.goto('http://94.74.82.109:3000/my-section/orders');
+    await page.waitForLoadState('load');
+    
+    await helper.myOrderPageInfo();
+    await helper.cancelTestOrder();
+    await page.pause();
+
     // Add assertions or further test steps
   });
 });

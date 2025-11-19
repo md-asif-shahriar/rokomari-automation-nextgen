@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import exp from 'constants';
 export class CartPage {
   constructor(page) {
     this.page = page;
@@ -113,8 +114,8 @@ export class CartPage {
       payableTotalRow.locator('span').nth(1).innerText()
     ]);
     expect(label).toBe('Payable Total');
-    console.log('Payable Total Label: ', label);
-    console.log('Payable Total Amount: ', amount);
+    expect()
+    expect(amount, 'Payable total amount should be greater than 0').not.toBe('৳0');
     return amount;
   }
 

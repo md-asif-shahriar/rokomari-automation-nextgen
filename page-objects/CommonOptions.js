@@ -7,7 +7,7 @@ export class CommonOptions {
         this.userName = page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'userContainer')]//span`);
         this.mySectionDropDownMenu = page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'dropdownContainer')]`);
         this.mySectionDropDownContainer = page.locator(`.js--user-menu`);
-        this.myOrderMenu = page.locator('a[href="/my-section/orders"]');
+        this.myOrderMenu = page.locator('a[href="/my-section/orders"]').nth(1);
     }
 
     async goToCartPage() {

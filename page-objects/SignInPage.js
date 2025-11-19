@@ -2,8 +2,8 @@ import { expect } from '@playwright/test';
 export class SignInPage {
     constructor(page) {
         this.page = page;
-        this.emailField = page.locator("#emailOrPhone");
-        this.passwordField = page.locator("#password");
+        this.emailField = page.locator("#emailOrPhone").first();
+        this.passwordField = page.locator("#password").first();
         this.nextButton = page.getByRole("button", { name: "পরবর্তী" });
         this.loginButton = page.getByRole('button', { name: 'Login', exact: true });
       }

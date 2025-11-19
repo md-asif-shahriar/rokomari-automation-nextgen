@@ -58,7 +58,7 @@ export class BookDetailsPage {
   }
 
   async clickGoToCart() {
-    await expect.soft(this.addToCartButtonText).toHaveText('Go to Cart', { timeout: 3000 });
+    await expect.soft(this.addToCartButtonText).toHaveText('Go to Cart ->', { timeout: 3000 });
     await Promise.all([
       this.page.waitForURL((url) => /\/cart/.test(url.pathname), { timeout: 10_000 }),
       this.addToCartButton.click()

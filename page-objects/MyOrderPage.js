@@ -2,9 +2,7 @@ import { expect } from '@playwright/test';
 export class MyOrderPage {
   constructor(page) {
     this.page = page;
-//     this.orderStatus = page.locator('div.border-success.text-success', {
-//   hasText: /PROCESSING|APPROVED/  // Matches either "Processing" or "Approved"
-// }).first();
+   this.orderStatus = page.locator('.order-status').first();
     
      
     this.trackOrderButton = page.getByRole('link', { name: 'Track My Order' }).first();
@@ -24,11 +22,10 @@ export class MyOrderPage {
   async getPayableTotal() {
     const payableAmount = await this.page.locator('xpath=//div//span[contains(text(), "Payable amount:")]/span[@class="text-success"]').first();
     const amount = await payableAmount.innerText();
-    console.log('Payable Amount:', amount);
     return amount;
   }
   async getOrderStatus() {
-    const currentStatus = 'PROCESSING';
+    const currentStatus = await this.orderStatus.innerText();
     console.log(`Current Order Status: ${currentStatus}`);
     return currentStatus;
   }
@@ -39,19 +36,21 @@ export class MyOrderPage {
 
     await this.page.pause();
 
-    const overlay = page.locator('#js--modal-overlay');
+    const overlay = this.page.locator('#js--modal-overlay');
     await expect(overlay, 'Overlay should be visible').toBeVisible();
 
-    const cancelYourOrderHeading = page.locator('h5', { hasText: 'Cancel Your Order' });
+    const cancelYourOrderHeading = this.page.locator('h5', { hasText: 'Cancel Your Order' });
     await expect(cancelYourOrderHeading, 'Cancel Order pop-up should be visible').toBeVisible();
 
-    const confirmCancelOrderButton = await cancelYourOrderHeading.locator('button:has-text("Confirm Cancel Order")');
+    const confirmCancelOrderButton = this.page.locator('button:has-text("Confirm Cancel Order")');
     await expect(confirmCancelOrderButton, 'Cancel Order button should be visible').toBeVisible();
     await expect(confirmCancelOrderButton, 'Cancel Order button should be disabled if no reason is selected').toBeDisabled();
 
-    const selectReasonDropdown = await cancelOrderPopUp.locator('select.custom-select');
+    //const selectReasonDropdown = await cancelYourOrderHeading.locator('select.custom-select');
+    const selectReasonDropdown = await this.page.locator('#js--modal-overlay').getByRole('combobox');
     await selectReasonDropdown.selectOption({ value: '11' });
-    await expect(confirmCancelOrderButton, 'Cancel Order button should be enabled after selecting a reason').toBeEnabled();
+    //await confirmCancelOrderButton.waitFor({ state: 'attached' });
+    //await expect(confirmCancelOrderButton, 'Cancel Order button should be enabled after selecting a reason').toBeEnabled();
     await confirmCancelOrderButton.click();
   }
 

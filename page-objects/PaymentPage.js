@@ -21,10 +21,8 @@ export class PaymentPage {
       payableTotalRow.locator('span').first().innerText(),
       payableTotalRow.locator('span').nth(1).innerText()
     ]);
-
     expect(label).toBe('Payable Total');
-    console.log('Payable Total Label: ', label);
-    console.log('Payable Total Amount: ', amount);
+    
     return amount;
   }
 

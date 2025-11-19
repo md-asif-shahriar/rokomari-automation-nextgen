@@ -2,20 +2,19 @@ import { expect } from '@playwright/test';
 export class ConfirmedOrderPage {
   constructor(page) {
     this.page = page;
-    this.orderNumber = page.getByText('Order Number:');
+    this.orderNumberLocator = page.locator('button[data-code]').first();
     this.trackOrderButton = page.getByRole('link', { name: 'Track Your Order' });
   }
 
   async getOrderNumber() {
-    const orderNumber = await this.orderNumber.innerText();
-    console.log('Order Number:', orderNumber);
-    return orderNumber.replace(/^.*:\s*(\d+)/, "$1").trim();
+    const orderNumber = await this.orderNumberLocator.getAttribute('data-code');
+    return orderNumber;
   }
 
   async getPayableTotal() {
     const payableTotalRow = this.page.locator(
       `xpath=//*[contains(@class, "orderPlaceSummary") and contains(@class, "rowContainer") and .//span[contains(text(), "Payable Total")]]`
-    );
+    ).first();
     await expect(payableTotalRow, 'Payable total row should be visible').toBeVisible({ timeout: 2500 });
 
     const [label, amount] = await Promise.all([
@@ -24,13 +23,12 @@ export class ConfirmedOrderPage {
     ]);
 
     expect(label).toBe('Payable Total');
-    console.log('Payable Total Label: ', label);
-    console.log('Payable Total Amount: ', amount);
     return amount;
   }
 
   async clickTrackOrder() {
     await expect(this.trackOrderButton).toBeVisible();
+    await expect(this.trackOrderButton).toBeEnabled();
     await this.trackOrderButton.click();
   }
 }

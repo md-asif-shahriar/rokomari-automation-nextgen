@@ -10,14 +10,12 @@ export class TrackOrderPage {
 
   async getOrderNumber() {
     const orderNumber = await this.orderNumber.innerText();
-    console.log('Order Number:', orderNumber);
-    await this.page.pause();
     return orderNumber.replace(/^.*:\s*(\d+)/, '$1').trim();
   }
 
   async getPayableTotal() {
     await expect(this.payableTotal, 'Payable total value should be visible').toBeVisible({ timeout: 2500 });
-    return await payableTotal.innerText();
+    return await this.payableTotal.innerText();
   }
 
   async clickTrackOrder() {
