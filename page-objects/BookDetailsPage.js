@@ -45,7 +45,7 @@ export class BookDetailsPage {
     if (buttonText.includes('Add to Cart')) {
       console.log('Add to Cart button is in "Add to Cart" state.');
       await this.addToCartButton.click();
-      await expect(this.addToCartButtonText).toHaveText('Go to Cart', {
+      await expect(this.addToCartButtonText).toHaveText('Go to Cart ->', {
         timeout: 3000
       });
     } else {

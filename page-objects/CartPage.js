@@ -114,7 +114,6 @@ export class CartPage {
       payableTotalRow.locator('span').nth(1).innerText()
     ]);
     expect(label).toBe('Payable Total');
-    expect()
     expect(amount, 'Payable total amount should be greater than 0').not.toBe('৳0');
     return amount;
   }

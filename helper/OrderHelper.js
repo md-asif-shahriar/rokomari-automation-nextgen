@@ -25,7 +25,7 @@ export default class OrderHelper {
     this.confirmedOrderPage = new ConfirmedOrderPage(page);
     this.trackOrderPage = new TrackOrderPage(page);
     this.myOrderPage = new MyOrderPage(page);
-    this.commonOptions = new CommonOptions(page); // Assuming you have a CommonOptions helper
+    this.commonOptions = new CommonOptions(page);
 
     // Page titles
     this.homePageTitle = testData.titles.homePage;
@@ -81,8 +81,6 @@ export default class OrderHelper {
   async goToBookDetails(productTitle) {
     console.log(`➡ Going to book details for: ${productTitle}`);
     const productLocator = await this.searchResultPage.isProductFound(productTitle);
-    //expect(productLocator.trim().length).toBeGreaterThan(0);
-
     if (productLocator && (await productLocator.count()) > 0) {
       console.log(`✅ Search service is working properly. Product found: ${productTitle}`);
       await this.searchResultPage.goToProductDetails(productLocator);
@@ -91,7 +89,6 @@ export default class OrderHelper {
       console.log(`❌ Product Not Found or search service is not working properly.`);
       return;
     }
-    //await this.page.pause();
   }
   async displayBookInformations() {
     console.log('➡ Book informations');
@@ -147,7 +144,6 @@ export default class OrderHelper {
   // Select Payment Method
   async selectPaymentMethod(paymentMethod = 'COD') {
     console.log(`➡ Selecting payment method: ${paymentMethod}`);
-    //const paymentMethod = 'COD';
     await this.paymentPage.selectPaymentMethod(paymentMethod);
   }
 
@@ -157,12 +153,12 @@ export default class OrderHelper {
     const payableTotal = await this.paymentPage.getPayableTotal();
     const confirmOrderButtonTotal = await this.paymentPage.getConfimmOrderButtonTotal();
     console.log(`Payable Total in payment page: ${payableTotal}`);
-    //expect(payableTotal, 'Payable total should be same in payment page').toBe(this.expectedPayableTotal);
-    //expect(confirmOrderButtonTotal, 'Confirm order button amount should be same in payment page').toBe(this.expectedPayableTotal);
+    expect(payableTotal, 'Payable total should be same in payment page').toBe(this.expectedPayableTotal);
+    expect(confirmOrderButtonTotal, 'Confirm order button amount should be same in payment page').toBe(this.expectedPayableTotal);
     await this.paymentPage.confirmOrder();
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.confirmedOrderPageTitle);
-    await this.page.pause();
+    //await this.page.pause();
   }
 
   // Confirmed Order Page
@@ -170,12 +166,12 @@ export default class OrderHelper {
     await this.page.waitForLoadState('load');
     console.log('➡ Confirmed order page informations');
     this.expectedOrderId = await this.confirmedOrderPage.getOrderNumber();
-    console.log(`Expected order ID in confirmed order page: ${this.expectedOrderId}`);
+    console.log(`Expected order ID from confirmed order page: ${this.expectedOrderId}`);
     const payableTotal = await this.confirmedOrderPage.getPayableTotal();
     console.log(`Payable Total in confirmed order page: ${payableTotal}`);
-    //expect(payableTotal, 'Payable total should be same in confirmed order page').toBe(this.expectedPayableTotal);
+    expect(payableTotal, 'Payable total should be same in confirmed order page').toBe(this.expectedPayableTotal);
     console.log(`Expected Order ID: ${this.expectedOrderId}`);
-    await this.page.pause();
+    //await this.page.pause();
   }
 
   // Go to Track Order Page
@@ -184,7 +180,7 @@ export default class OrderHelper {
     await this.confirmedOrderPage.clickTrackOrder();
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.trackOrderPageTitle);
-    await this.page.pause();
+    //await this.page.pause();
   }
 
   // Track Order Page
@@ -192,14 +188,11 @@ export default class OrderHelper {
     console.log('➡ Track order informations');
     const orderNumber = await this.trackOrderPage.getOrderNumber();
     console.log(`Tracked Order Number: ${orderNumber}`);
-    await this.page.pause();
-    expect(orderNumber, 'Order number in track order page should match the confirmed order page').toBe(
-      this.expectedOrderId
-    );
+    expect(orderNumber, 'Order number in track order page should match the confirmed order page').toBe(this.expectedOrderId);
     const payableTotal = await this.trackOrderPage.getPayableTotal();
     console.log(`Payable Total in track order page: ${payableTotal}`);
-    //expect(payableTotal, 'Payable total should be same in track order page').toBe(this.expectedPayableTotal);
-    await this.page.pause();
+    expect(payableTotal, 'Payable total should be same in track order page').toBe(this.expectedPayableTotal);
+    //await this.page.pause();
   }
 
   // Go to My Orders Page
@@ -208,7 +201,7 @@ export default class OrderHelper {
     await this.commonOptions.goToMyOrder();
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.myOrderPageTitle);
-    await this.page.pause();
+    //await this.page.pause();
   }
 
   // My Order Page
@@ -216,7 +209,6 @@ export default class OrderHelper {
     console.log('➡ My Orders page informations');
     const isOrderFound = await this.myOrderPage.isOrderFound(this.expectedOrderId);
     console.log(`Order matched in My Orders page: ${isOrderFound}`);
-    await this.page.pause();
     expect(isOrderFound, `Order ID ${this.expectedOrderId} should be found in My Orders`).toBeTruthy();
     const payable = await this.myOrderPage.getPayableTotal();
     console.log(`Payable Total in my order page: ${payable}`);
@@ -224,7 +216,7 @@ export default class OrderHelper {
     this.expectedOrderStatus = await this.myOrderPage.getOrderStatus();
     console.log(`Current order status of my order ${this.expectedOrderId} in my order page: ${this.expectedOrderStatus}`);
     expect.soft(this.expectedOrderStatus).toBe('PROCESSING');
-    await this.page.pause();
+    //await this.page.pause();
   }
 
   // Cancel Test Order

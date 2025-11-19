@@ -31,7 +31,7 @@ let browser;
 // });
 
 test.describe('Master Order Flow', () => {
-  test.skip('Normal Order Flow (COD)', async ({ page }) => {
+  test('Normal Order Flow (COD)', async ({ page }) => {
     const helper = new OrderHelper(page);
     await helper.openHomePage();
     await helper.signIn(email, password, 'home');
@@ -50,11 +50,39 @@ test.describe('Master Order Flow', () => {
     await helper.trackOrderPageInfo();
     await helper.goToMyOrder();
     await helper.myOrderPageInfo();
+    await page.pause();
+    await page.close();
     await helper.cancelTestOrder();
     await page.pause();
+    await page.close();
+  });
+  test('Sign in after place order flow', async ({ page }) => {
+    const helper = new OrderHelper(page);
+    await helper.openHomePage();
+    await helper.searchForABook(searchKeyword);
+    await helper.goToBookDetails(productTitle);
+    await helper.displayBookInformations();
+    await helper.addToCart();
+    await helper.goToCart();
+    await helper.signIn(email, password, 'cart');
+    await helper.selectProduct(productId);
+    await helper.selectAddress('local');
+    await helper.proceedToCheckout();
+    await helper.selectPaymentMethod(paymentMethod);
+    await helper.confirmOrder();
+    await helper.confirmedOrderPageInfo();
+    await helper.goToTrackOrder();
+    await helper.trackOrderPageInfo();
+    await helper.goToMyOrder();
+    await helper.myOrderPageInfo();
+    await page.pause();
+    await page.close();
+    await helper.cancelTestOrder();
+    await page.pause();
+    await page.close();
   });
 
-  test('Sign in after place order flow', async ({ page }) => {
+  test.skip('Test order', async ({ page }) => {
     const helper = new OrderHelper(page);
     await helper.openHomePage(page);
     await helper.signIn(email, password, 'home');
