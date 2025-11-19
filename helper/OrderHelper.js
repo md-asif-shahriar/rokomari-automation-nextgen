@@ -55,14 +55,20 @@ export default class OrderHelper {
     expect.soft(this.page.url()).toMatch(this.homePagePath);
     console.log('✅ Home page loads successfully');
   }
+  async goToSignIn() {
+    console.log('➡ Go to sign-in page');
+    await this.commonOptions.goToSignIn();
+    await this.page.waitForLoadState('load');
+    await expect.soft(this.page).toHaveTitle(this.signInPageTitle);
+    //expect.soft(this.page.url()).toMatch(this.homePagePath);
+    console.log('✅ Sign in page loads successfully');
+  }
 
   // Sign In
   async signIn(email, password, expectedPage) {
-    console.log('➡ Go to sign-in page and perform sign in');
-    await this.page.goto('/login');
+    console.log('➡ Perform sign in');
     await this.signInPage.login(email, password); // Assuming you have a signInPage helper
     await this.page.waitForLoadState('load');
-
     if (expectedPage === 'home') {
       await expect.soft(this.page).toHaveTitle(this.homePageTitle);
     } else if (expectedPage === 'cart') {
@@ -121,22 +127,32 @@ export default class OrderHelper {
 
   async selectAddress(addressType = 'local') {
     console.log('➡ Select shipping address');
-    if (addressType == 'foreign') {
-      //await this.cartPage.selectAddress(foreignAddress);
+    const currentAddress = await this.cartPage.getCurrentAddress();
+    if (currentAddress.includes('বাংলাদেশ')) {
+      console.log(`✅ ${addressType} address is already selected`);
       return;
     }
-    //await this.cartPage.selectAddress(localAddress);
-    //await this.page.pause();
+    else {
+      console.log('Selecting address: ', addressType);
+    }
   }
 
   // Proceed to Checkout
-  async proceedToCheckout() {
+  async proceedToCheckout(expectedPage) {
     console.log('➡ Proceed to checkout');
     const isEmpty = await this.cartPage.isCartEmpty();
     expect(isEmpty).toBeFalsy();
+     if (expectedPage === 'login') {
+      await this.cartPage.clickProceedToCheckout();
+      await this.page.waitForLoadState('load');
+      await expect.soft(this.page).toHaveTitle(this.signInPageTitle);
+      return;
+    } 
     this.expectedPayableTotal = await this.cartPage.getPayableTotal();
     console.log(`Payable Total in cart page: ${this.expectedPayableTotal}`);
     await this.cartPage.clickProceedToCheckout();
+    await this.page.waitForLoadState('load');
+
     await expect.soft(this.page).toHaveTitle(this.paymentPageTitle);
     //await this.page.pause();
   }

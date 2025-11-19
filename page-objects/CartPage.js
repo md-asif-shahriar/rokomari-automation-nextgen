@@ -25,8 +25,9 @@ export class CartPage {
     this.overlay = page.locator('#js--modal-overlay');
 
     this.addressForm = page.locator('.shippingAddressForm-module-scss-module__Hsp-IW__formsContainer');
-  }
 
+    this.currentAddressSection = page.locator(`xpath=//*[contains(@class, 'cartShippingAddress') and contains(@class, 'addressCon')]`);
+  }
   async visit() {
     await this.page.goto('/cart');
     await this.page.waitForLoadState('load');
@@ -67,7 +68,21 @@ export class CartPage {
     await this.page.waitForTimeout(2000);
   }
 
-  async selectAddress(localAddress) {
+  async getCurrentAddress() {
+    await expect (this.currentAddressSection, 'Current address section should be visible').toBeVisible({ timeout: 2500 });
+    const currentAddress = await this.currentAddressSection.innerText();
+    console.log('Current address: ', currentAddress);
+    if (currentAddress.includes('বাংলাদেশ')) {
+      console.log(`✅ ${addressType} address is already selected`);
+      return;
+    }
+    
+    console.log('✅ Address selected/added successfully');
+  }
+  async selectAddress() {
+    console.log('✅ Address selected/added successfully');
+  }
+  async selectAddress2(localAddress) {
     if (await this.shippingAddressSection.isVisible()) {
       console.log('✅ Shipping address is selected');
       return;

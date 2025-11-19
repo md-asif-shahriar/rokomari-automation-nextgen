@@ -3,13 +3,18 @@ export class CommonOptions {
     constructor(page){
         this.page = page;
         this.cartIcon = page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'cartContainer')]`);
-        this.signInButton = page.locator('a[href="/login"]');
+        //this.signInButton = page.locator('a[href="/login"]'); navigation-module-scss-module__FAVpgG__SignIn
+        this.signInButton = page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'SignIn')]`);
         this.userName = page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'userContainer')]//span`);
         this.mySectionDropDownMenu = page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'dropdownContainer')]`);
         this.mySectionDropDownContainer = page.locator(`.js--user-menu`);
         this.myOrderMenu = page.locator('a[href="/my-section/orders"]').nth(1);
     }
 
+    async goToSignIn() {
+        await expect(this.signInButton, 'Sign In button is visible').toBeVisible();
+        await this.signInButton.click();
+    }
     async goToCartPage() {
         await this.cartIcon.click();
         await this.page.waitForLoadState('load');
