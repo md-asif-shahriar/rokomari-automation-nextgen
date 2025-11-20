@@ -7,11 +7,27 @@ const testData = {
     name: 'Rok T',
     phone: '01711112222',
     alternatePhone: '01833334444',
-    country: 'বাংলাদেশ',
+    countryBD: 'বাংলাদেশ',
+    countryIndia: 'ভারত',
     city: 'Dhaka',
     area: 'Agargaon',
     addressLine: 'Test Address',
     addressType: 'Home',
+  },
+
+  paymentMethod: {
+    bkash: 'BKASH',
+    nagad: 'NAGAD',
+    rocket: 'ROCKET',
+    cod: 'COD',
+    card: 'CARD',
+  },
+  domain: {
+    bkash: 'BKASH',
+    nagad: 'NAGAD',
+    rocket: 'ROCKET',
+    cod: 'COD',
+    card: 'https://epay-gw.sslcommerz.com',
   },
 
   // Page titles
@@ -25,6 +41,10 @@ const testData = {
     confirmedOrderPage: 'Order Confirmation | Rokomari.com',
     trackOrderPage: 'Order Track | Rokomari.com',
     myOrderPage: 'My Orders | Rokomari.com',
+    bkashPage: 'easyCheckout',
+    nagadPage: 'easyCheckout',
+    rocketPage: 'easyCheckout',
+    sslPage: 'easyCheckout',
   },
 
   //Page URL paths
@@ -37,7 +57,7 @@ const testData = {
     shippingPage: '/shipping',
     confirmedOrderPage: '/order-confirmation',
     trackOrderPage: '/ordertrack',
-    myOrderPage: '/my-orders',
+    myOrderPage: '/my-section/orders',
   }
 
 };

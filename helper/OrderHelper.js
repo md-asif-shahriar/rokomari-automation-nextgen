@@ -10,6 +10,7 @@ import { ConfirmedOrderPage } from '../page-objects/ConfirmedOrderPage';
 import { TrackOrderPage } from '../page-objects/TrackOrderPage';
 import { MyOrderPage } from '../page-objects/MyOrderPage';
 import { CommonOptions } from '../page-objects/CommonOptions';
+import { bkashPage, nagadPage, rocketPage, sslPage } from '../page-objects/OnlinePayment';
 
 export default class OrderHelper {
   constructor(page) {
@@ -37,9 +38,14 @@ export default class OrderHelper {
     this.confirmedOrderPageTitle = testData.titles.confirmedOrderPage;
     this.trackOrderPageTitle = testData.titles.trackOrderPage;
     this.myOrderPageTitle = testData.titles.myOrderPage;
+    this.bkashPageTitle = testData.titles.bkashPage;
+    this.nagadPageTitle = testData.titles.nagadPage;
+    this.rocketPageTitle = testData.titles.rocketPage;
+    this.sslPageTitle = testData.titles.sslPage;
 
     // Page URL paths
     this.homePagePath = testData.paths.homePage;
+    this.myOrderPagePath = testData.paths.myOrderPage;
 
     this.expectedPayableTotal = '';
     this.expectedOrderId = '';
@@ -125,15 +131,16 @@ export default class OrderHelper {
     //await this.page.pause();
   }
 
-  async selectAddress(addressType = 'local') {
+  async selectShippingAddress(country = 'বাংলাদেশ') {
     console.log('➡ Select shipping address');
-    const currentAddress = await this.cartPage.getCurrentAddress();
-    if (currentAddress.includes('বাংলাদেশ')) {
-      console.log(`✅ ${addressType} address is already selected`);
+    let currentAddress = await this.cartPage.getCurrentAddress();
+    if (await currentAddress.includes(country)) {
+      console.log(`✅ ${country} address is already selected`);
       return;
     }
     else {
-      console.log('Selecting address: ', addressType);
+      await this.cartPage.changeShippingAddress(country);
+      console.log(`✅ Address changed for ${country} successfully`);
     }
   }
 
@@ -157,6 +164,8 @@ export default class OrderHelper {
     //await this.page.pause();
   }
 
+  
+
   // Select Payment Method
   async selectPaymentMethod(paymentMethod = 'COD') {
     console.log(`➡ Selecting payment method: ${paymentMethod}`);
@@ -175,6 +184,37 @@ export default class OrderHelper {
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.confirmedOrderPageTitle);
     //await this.page.pause();
+  }
+
+  async handleOnlinePaymentGateway(paymentMethod, expectedDomain){
+    console.log('➡ Handling online payment gateway');
+    if (paymentMethod === 'BKASH') {
+      console.log('Handling Bkash payment gateway...');
+      // Implement Bkash payment gateway handling here
+    } else if (paymentMethod === 'NAGAD') {
+      console.log('Handling Nagad payment gateway...');
+      // Implement Nagad payment gateway handling here
+    } else if (paymentMethod === 'ROCKET') {
+      console.log('Handling Rocket payment gateway...');
+      // Implement Rocket payment gateway handling here
+    } else if (paymentMethod === 'CARD') {
+      bkashPage(this.page, expectedDomain, this.bkashPageTitle, this.myOrderPagePath);
+      const currentUrl = await this.page.url();
+      const currentDomain = new URL(currentUrl).origin;
+      expect.soft(currentDomain, 'Should navigate to SSLCommerz payment gateway').toBe(expectedDomain);
+      let tapImage = this.page.locator('#tapImg');
+      await tapImage.waitFor({ state: 'visible', timeout: 9000 });
+      let title = await this.page.title();
+      expect.soft(this.page).toHaveTitle(this.bkashPageTitle);
+      let amount = await this.page.locator('.loading-btn__text span').innerText();
+      let numericAmount = parseFloat(amount);
+      let formattedAmount = `৳${numericAmount.toFixed(0)}`;
+      await this.page.pause();
+      console.log(`Page title after returning: ${await this.page.title()}`);
+      await this.page.goTo(this.myOrderPagePath);
+      await this.page.pause();
+      // Implement Card payment gateway handling here
+    }
   }
 
   // Confirmed Order Page

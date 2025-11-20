@@ -9,9 +9,17 @@ let browser;
   const password = process.env.PASSWORD;
   const username = process.env.USERNM;
 
-  let paymentMethod = process.env.PAYMENT_METHOD; // Cash on Delivery
+  let paymentMethodCOD = testData.paymentMethod.cod;
+  let paymentMethodBkash = testData.paymentMethod.bkash;
+  let paymentMethodNagad = testData.paymentMethod.nagad;
+  let paymentMethodRocket = testData.paymentMethod.rocket;
+  let paymentMethodCard = testData.paymentMethod.card;
+
+  let sslDomain = testData.domain.card;
 
   let searchKeyword = testData.searchKeyword;
+  let countryBD = testData.localAddress.countryBD;
+  let countryIndia = testData.localAddress.countryIndia;
 
   let productId = testData.cartProductId;
   let productTitle = testData.productTitle;
@@ -42,9 +50,9 @@ test.describe('Master Order Flow', () => {
     await helper.addToCart();
     await helper.goToCart();
     await helper.selectProduct(productId);
-    await helper.selectAddress('local');
+    await helper.selectShippingAddress(countryBD);
     await helper.proceedToCheckout();
-    await helper.selectPaymentMethod(paymentMethod);
+    await helper.selectPaymentMethod(paymentMethodCOD);
     await helper.confirmOrder();
     await helper.confirmedOrderPageInfo();
     await helper.goToTrackOrder();
@@ -68,9 +76,9 @@ test.describe('Master Order Flow', () => {
     await helper.proceedToCheckout('login');
     await helper.signIn(email, password, 'cart');
     await helper.selectProduct(productId);
-    await helper.selectAddress('local');
+    await helper.selectShippingAddress(countryBD);
     await helper.proceedToCheckout('payment');
-    await helper.selectPaymentMethod(paymentMethod);
+    await helper.selectPaymentMethod(paymentMethodCOD);
     await helper.confirmOrder();
     await helper.confirmedOrderPageInfo();
     await helper.goToTrackOrder();
@@ -83,7 +91,7 @@ test.describe('Master Order Flow', () => {
     //await page.pause();
     //await page.close();
   });
-  test.skip('Abroad/Foreign order', async ({ page }) => {
+  test('Abroad/Foreign order', async ({ page }) => {
     const helper = new OrderHelper(page);
     await helper.openHomePage();
     await helper.searchForABook(searchKeyword);
@@ -94,11 +102,15 @@ test.describe('Master Order Flow', () => {
     await helper.proceedToCheckout('login');
     await helper.signIn(email, password, 'cart');
     await helper.selectProduct(productId);
-    await helper.selectAddress('local');
+    await helper.selectShippingAddress(countryIndia);
     await helper.proceedToCheckout('payment');
-    await helper.selectPaymentMethod(paymentMethod);
+    await helper.selectPaymentMethod(paymentMethodCard);
+    await page.pause();
     await helper.confirmOrder();
+    await helper.handleOnlinePaymentGateway(paymentMethodCard, sslDomain);
+    await page.pause();
     await helper.confirmedOrderPageInfo();
+    await page.pause();
     await helper.goToTrackOrder();
     await helper.trackOrderPageInfo();
     await helper.goToMyOrder();
@@ -110,7 +122,7 @@ test.describe('Master Order Flow', () => {
     //await page.close();
   });
 
-  test('Test order', async ({ page }) => {
+  test.skip('Test order', async ({ page }) => {
     const helper = new OrderHelper(page);
     await helper.openHomePage(page);
     await helper.goToSignIn();
@@ -119,7 +131,9 @@ test.describe('Master Order Flow', () => {
     await page.goto('http://94.74.82.109:3000/cart');
     await page.waitForLoadState('load');
     
-    await helper.selectAddress('local');
+    await helper.selectShippingAddress(countryBD);
+    await helper.selectShippingAddress(countryIndia);
+    await helper.selectShippingAddress(countryBD);
     await page.pause();
 
     // Add assertions or further test steps

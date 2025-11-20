@@ -37,20 +37,24 @@ export class PaymentPage {
 
     async selectPaymentMethod(paymentMethod = 'COD') {
         await expect(this.confirmOrderButton, 'Confirm order should be disabled if payment method is not selected').toBeDisabled();
-        await this.cashOnDelivery.waitFor({ state: 'visible' });
         if (paymentMethod === 'COD') {
+            await this.cashOnDelivery.waitFor({ state: 'visible' });
             console.log('Selecting Cash on Delivery as payment method');
             await this.cashOnDelivery.click();
         } else if (paymentMethod === 'BKASH') {
+            await this.bkash.waitFor({ state: 'visible' });
             console.log('Selecting Bkash as payment method');
             await this.bkash.click();
         } else if (paymentMethod === 'NAGAD') {
+            await this.nagad.waitFor({ state: 'visible' });
             console.log('Selecting Nagad as payment method');
             await this.nagad.click();
         } else if (paymentMethod === 'ROCKET') {
+            await this.rocket.waitFor({ state: 'visible' });
             console.log('Selecting Rocket as payment method');
             await this.rocket.click();
         } else if (paymentMethod === 'CARD') {
+            await this.card.waitFor({ state: 'visible' });
             console.log('Selecting Card as payment method');
             await this.card.click();
         }
