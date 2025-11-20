@@ -43,6 +43,9 @@ export default class OrderHelper {
     this.rocketPageTitle = testData.titles.rocketPage;
     this.sslPageTitle = testData.titles.sslPage;
 
+    //Domains
+    this.expectedDomain = testData.domain.card;
+
     // Page URL paths
     this.homePagePath = testData.paths.homePage;
     this.myOrderPagePath = testData.paths.myOrderPage;
@@ -186,32 +189,21 @@ export default class OrderHelper {
     //await this.page.pause();
   }
 
-  async handleOnlinePaymentGateway(paymentMethod, expectedDomain){
+  async handleOnlinePaymentGateway(paymentMethod){
     console.log('➡ Handling online payment gateway');
     if (paymentMethod === 'BKASH') {
       console.log('Handling Bkash payment gateway...');
-      // Implement Bkash payment gateway handling here
+      await bkashPage(this.page, this.expectedDomain, this.bkashPageTitle, this.myOrderPagePath, this.expectedPayableTotal);
+      await this.page.pause();
     } else if (paymentMethod === 'NAGAD') {
       console.log('Handling Nagad payment gateway...');
+      await nagadPage(this.page, this.expectedDomain, this.bkashPageTitle, this.myOrderPagePath, this.expectedPayableTotal);
       // Implement Nagad payment gateway handling here
     } else if (paymentMethod === 'ROCKET') {
       console.log('Handling Rocket payment gateway...');
       // Implement Rocket payment gateway handling here
     } else if (paymentMethod === 'CARD') {
-      bkashPage(this.page, expectedDomain, this.bkashPageTitle, this.myOrderPagePath);
-      const currentUrl = await this.page.url();
-      const currentDomain = new URL(currentUrl).origin;
-      expect.soft(currentDomain, 'Should navigate to SSLCommerz payment gateway').toBe(expectedDomain);
-      let tapImage = this.page.locator('#tapImg');
-      await tapImage.waitFor({ state: 'visible', timeout: 9000 });
-      let title = await this.page.title();
-      expect.soft(this.page).toHaveTitle(this.bkashPageTitle);
-      let amount = await this.page.locator('.loading-btn__text span').innerText();
-      let numericAmount = parseFloat(amount);
-      let formattedAmount = `৳${numericAmount.toFixed(0)}`;
-      await this.page.pause();
-      console.log(`Page title after returning: ${await this.page.title()}`);
-      await this.page.goTo(this.myOrderPagePath);
+      await sslPage(this.page, this.expectedDomain, this.bkashPageTitle, this.myOrderPagePath, this.expectedPayableTotal);
       await this.page.pause();
       // Implement Card payment gateway handling here
     }

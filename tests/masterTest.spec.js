@@ -15,7 +15,6 @@ let browser;
   let paymentMethodRocket = testData.paymentMethod.rocket;
   let paymentMethodCard = testData.paymentMethod.card;
 
-  let sslDomain = testData.domain.card;
 
   let searchKeyword = testData.searchKeyword;
   let countryBD = testData.localAddress.countryBD;
