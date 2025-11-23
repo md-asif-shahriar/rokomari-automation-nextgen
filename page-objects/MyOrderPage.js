@@ -2,8 +2,9 @@ import { expect } from '@playwright/test';
 export class MyOrderPage {
   constructor(page) {
     this.page = page;
+    this.orderCards = page.locator('[class*="mySectionCardContainer"] > div.py-5.border-b');
     this.orderStatus = page.locator('.order-status').first();
-    this.trackOrderButton = page.getByRole('link', { name: 'Track My Order' }).first();
+    this.trackMyOrderButton = page.getByRole('link', { name: 'Track My Order' }).first();
   }
 
   async isOrderFound(orderId) {
@@ -55,8 +56,8 @@ export class MyOrderPage {
     await confirmCancelOrderButton.click();
   }
 
-  async clickTrackOrder() {
-    await expect(this.trackOrderButton).toBeVisible();
-    await this.trackOrderButton.click();
+  async clickTrackMyOrder() {
+    await expect(this.trackMyOrderButton).toBeVisible();
+    await this.trackMyOrderButton.click();
   }
 }

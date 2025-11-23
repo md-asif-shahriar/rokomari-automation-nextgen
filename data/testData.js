@@ -15,15 +15,22 @@ const testData = {
     addressType: 'Home',
   },
 
+  locators:{
+    paymentGatewayPage:{
+      bkash: '#WALLET',
+      card: '#tapImg'
+    }
+  }, 
+  
   paymentMethod: {
-    bkash: 'BKASH',
-    nagad: 'NAGAD',
-    rocket: 'ROCKET',
-    cod: 'COD',
-    card: 'CARD',
+    bkash: 'bkash',
+    nagad: 'nagad',
+    rocket: 'rocket',
+    cod: 'cod',
+    card: 'card',
   },
   domain: {
-    bkash: 'BKASH',
+    bkash: 'https://sandbox.payment.bkash.com',
     nagad: 'NAGAD',
     rocket: 'ROCKET',
     cod: 'COD',
@@ -41,10 +48,13 @@ const testData = {
     confirmedOrderPage: 'Order Confirmation | Rokomari.com',
     trackOrderPage: 'Order Track | Rokomari.com',
     myOrderPage: 'My Orders | Rokomari.com',
-    bkashPage: 'easyCheckout',
-    nagadPage: 'easyCheckout',
-    rocketPage: 'easyCheckout',
-    sslPage: 'easyCheckout',
+    paymentGatewayPage: {
+      bkash: 'Agreement only',
+      nagad: 'easyCheckout',
+      rocket: 'easyCheckout',
+      ssl: 'easyCheckout',
+    }
+    
   },
 
   //Page URL paths

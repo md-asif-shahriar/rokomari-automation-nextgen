@@ -36,7 +36,7 @@ export class CartPage {
       `xpath=//*[contains(@class, 'cartShippingAddress') and contains(@class, 'addressCon')]`
     ).first();
 
-    this.payableTotalRow = this.page.locator(
+    this.payableTotalRow = page.locator(
       `xpath=//*[contains(@class, "checkoutSummary") and contains(@class, "rowContainer") and .//span[contains(text(), "Payable Total")]]`
     );
   }
@@ -116,45 +116,16 @@ export class CartPage {
     console.log(`❌ No address found with country: ${country}`);
   }
 
-  async selectAddress2(localAddress) {
-    if (await this.shippingAddressSection.isVisible()) {
-      console.log('✅ Shipping address is selected');
-      return;
-    }
-    console.log('Selecting address: ', localAddress);
-    const { name, phone, alternatePhone, country, city, area, addressLine, addressType } = localAddress;
-    await this.page.pause();
-    await this.addShippingAddressButton.click();
-    await this.page.pause();
-    await expect(this.overlay, 'Overlay should be visible').toBeVisible({ timeout: 2500 });
-    await expect(this.addAddressPopup, 'Address modal form should be visible').toBeVisible({ timeout: 2500 });
-
-    //this.addressForm = this.page.locator('.shippingAddressForm-module-scss-module__Hsp-IW__formsContainer');
-    console.log(`address form visibility: ${await this.addressForm.isVisible()}`);
-    await this.page.pause();
-
-    await this.addressForm.getByPlaceholder('Name').fill(name);
-    await this.addressForm.getByPlaceholder('Mobile (WhatsApp Number Preferable) *').fill(phone);
-    await this.addressForm.getByPlaceholder('Alt. Mobile Number').fill(alternatePhone);
-    await this.addressForm.getByRole('radio', { name: 'HOME' }).check();
-    await this.page.pause();
-
-    await addressForm.getByRole('combobox').selectOption('ভারত');
-    await this.page.pause();
-    await addressForm.getByRole('combobox').selectOption(city);
-    await addressForm.getByRole('combobox').selectOption(area);
-    await addressForm.getByPlaceholder('বাসা/ফ্ল্যাট নম্বর').fill(addressLine);
-    await addressForm.getByRole('combobox').selectOption(addressType);
-    await this.page.pause();
-
-    await addressForm.getByRole('input', { name: 'Home' }).click();
-
-    await addressForm.getByRole('button', { name: 'সেভ করে এগিয়ে যান' }).click();
-    console.log('✅ Address selected/added successfully');
+  async isEmployeeDiscountApplied(){
+    const employeeDiscountBadge = await this.page.locator('.checkoutSummary-module-scss-module__LKFYTa__rowContainer:has-text("Employee Discount")');
+    const isVisible = await employeeDiscountBadge.isVisible();
+    console.log(`Employee Discount applied: ${isVisible}`);
+    console.log(`Discounr value: ${await employeeDiscountBadge.locator('span').nth(1).innerText()}`);
+    return isVisible;
   }
 
   async getPayableTotal() {
-
+    
     await expect(this.payableTotalRow, 'Payable total row should be visible').toBeVisible({ timeout: 2500 });
     const [label, amount] = await Promise.all([
       this.payableTotalRow.locator('span').first().innerText(),

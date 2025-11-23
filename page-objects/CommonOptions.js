@@ -11,7 +11,11 @@ export class CommonOptions {
         this.myOrderMenu = page.locator('a[href="/my-section/orders"]').nth(1);
     }
 
-    async goToSignIn() {
+    async isSignInButtonPresent() {
+        return await this.signInButton.isVisible();
+    }
+
+    async clickSignIn() {
         await expect(this.signInButton, 'Sign In button is visible').toBeVisible();
         await this.signInButton.click();
     }

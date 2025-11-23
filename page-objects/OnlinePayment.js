@@ -24,7 +24,7 @@ export async function bkashPage(page, expectedDomain, pageTitle, myOrderPagePath
   const currentUrl = await page.url();
   const currentDomain = new URL(currentUrl).origin;
   expect.soft(currentDomain, 'Should navigate to bkash payment gateway').toBe(expectedDomain);
-  let tapImage = page.locator('#tapImg');
+  let tapImage = page.locator('.footer__copyright');
   await tapImage.waitFor({ state: 'visible', timeout: 9000 });
   expect.soft(page).toHaveTitle(pageTitle);
   let amount = await page.locator('.loading-btn__text span').innerText();

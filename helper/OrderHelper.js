@@ -10,7 +10,7 @@ import { ConfirmedOrderPage } from '../page-objects/ConfirmedOrderPage';
 import { TrackOrderPage } from '../page-objects/TrackOrderPage';
 import { MyOrderPage } from '../page-objects/MyOrderPage';
 import { CommonOptions } from '../page-objects/CommonOptions';
-import { bkashPage, nagadPage, rocketPage, sslPage } from '../page-objects/OnlinePayment';
+import log from '../utils/logger.js';
 
 export default class OrderHelper {
   constructor(page) {
@@ -43,239 +43,326 @@ export default class OrderHelper {
     this.rocketPageTitle = testData.titles.rocketPage;
     this.sslPageTitle = testData.titles.sslPage;
 
-    //Domains
-    this.expectedDomain = testData.domain.card;
-
     // Page URL paths
     this.homePagePath = testData.paths.homePage;
     this.myOrderPagePath = testData.paths.myOrderPage;
+    this.cartPagePath = testData.paths.cartPage;
 
-    this.expectedPayableTotal = '';
-    this.expectedOrderId = '';
-    this.expectedOrderStatus = '';
+    //Save state
+    this.state = {
+      payableTotal: null,
+      paymentMethod: null,
+      orderId: null,
+      orderStatus: null
+    };
   }
 
   // Open Home Page
   async openHomePage() {
-    console.log('➡ Opening home page');
+    log.step('Opening home page');
     await this.page.goto('/');
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.homePageTitle);
     expect.soft(this.page.url()).toMatch(this.homePagePath);
-    console.log('✅ Home page loads successfully');
+    log.success('Home page loads successfully');
   }
   async goToSignIn() {
-    console.log('➡ Go to sign-in page');
-    await this.commonOptions.goToSignIn();
+    log.step('In home page');
+    log.info('Click sign in button');
+    await this.commonOptions.clickSignIn();
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.signInPageTitle);
     //expect.soft(this.page.url()).toMatch(this.homePagePath);
-    console.log('✅ Sign in page loads successfully');
+    log.success('Sign in page loads successfully');
+    log.step('In sign in page');
   }
 
   // Sign In
   async signIn(email, password, expectedPage) {
-    console.log('➡ Perform sign in');
-    await this.signInPage.login(email, password); // Assuming you have a signInPage helper
+    log.info('Perform sign in with email and password');
+    await this.signInPage.login(email, password);
     await this.page.waitForLoadState('load');
     if (expectedPage === 'home') {
       await expect.soft(this.page).toHaveTitle(this.homePageTitle);
+      log.success('Home page loads successfully');
     } else if (expectedPage === 'cart') {
       await expect.soft(this.page).toHaveTitle(this.cartPageTitle);
+      log.success('Cart page loads successfully');
     }
   }
 
   // Search for a Book
   async searchForABook(searchKeyword) {
-    console.log('➡ Searching for a book');
+    log.info('Searching for a book');
     await this.homePage.search(searchKeyword);
     await expect.soft(this.page).toHaveTitle(this.searchResultPageTitle);
+    log.success('Search result page loads successfully');
   }
 
   // Go to Book Details Page
   async goToBookDetails(productTitle) {
-    console.log(`➡ Going to book details for: ${productTitle}`);
+    log.step('In search result page');
+    test.info(`Going to book details for: ${productTitle}`);
     const productLocator = await this.searchResultPage.isProductFound(productTitle);
     if (productLocator && (await productLocator.count()) > 0) {
-      console.log(`✅ Search service is working properly. Product found: ${productTitle}`);
+      log.success(`Search service is working properly. Product found: ${productTitle}`);
       await this.searchResultPage.goToProductDetails(productLocator);
       await expect.soft(this.page).toHaveTitle(this.bookDetailsPageTitle);
+      log.success('Book details page loads successfully');
     } else {
-      console.log(`❌ Product Not Found or search service is not working properly.`);
+      log.error(`Product Not Found or search service is not working properly.`);
       return;
     }
   }
+
   async displayBookInformations() {
-    console.log('➡ Book informations');
-    console.log(`Title: ${await this.bookDetailsPage.getTitle()}`);
-    console.log(`Book Title: ${await this.bookDetailsPage.getBookTitle()}`);
-    console.log(`Author Name: ${await this.bookDetailsPage.getAuthorName()}`);
+    log.step('In book details page');
+    log.info(`Title: ${await this.bookDetailsPage.getTitle()}`);
+    log.info(`Book Title: ${await this.bookDetailsPage.getBookTitle()}`);
+    log.info(`Author Name: ${await this.bookDetailsPage.getAuthorName()}`);
     //await this.page.pause();
   }
 
   // Add Book to Cart
   async addToCart() {
-    console.log('➡ Adding book to cart');
+    log.info('Adding book to cart');
     await this.bookDetailsPage.clickAddToCart();
     //await this.page.pause();
   }
 
   // Go to Cart
   async goToCart() {
-    console.log('➡ Go to cart');
+    log.info('Go to cart');
     await this.bookDetailsPage.clickGoToCart();
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.cartPageTitle);
+    log.success('Cart page loads successfully');
     //await this.page.pause();
   }
+
   async selectProduct(productId) {
-    console.log('➡ Select product in cart');
+    log.step('In cart page');
+    log.info('Selecting one product in cart');
     await this.cartPage.selectProductById(productId);
     //await this.page.pause();
   }
 
   async selectShippingAddress(country = 'বাংলাদেশ') {
-    console.log('➡ Select shipping address');
+    log.info('Selecting shipping address');
     let currentAddress = await this.cartPage.getCurrentAddress();
     if (await currentAddress.includes(country)) {
-      console.log(`✅ ${country} address is already selected`);
+      log.success(`${country} address is already selected`);
       return;
-    }
-    else {
+    } else {
       await this.cartPage.changeShippingAddress(country);
-      console.log(`✅ Address changed for ${country} successfully`);
+      log.success(`Address changed for ${country} successfully`);
     }
+  }
+
+  async checkEmployeeDiscountApplied() {
+    log.info('Checking employee discount in cart');
+    const isEmployeeDiscountApplied = await this.cartPage.isEmployeeDiscountApplied();
+    expect(isEmployeeDiscountApplied, 'Employee discount should be applied').toBeTruthy();
   }
 
   // Proceed to Checkout
   async proceedToCheckout(expectedPage) {
-    console.log('➡ Proceed to checkout');
     const isEmpty = await this.cartPage.isCartEmpty();
     expect(isEmpty).toBeFalsy();
-     if (expectedPage === 'login') {
+    const isSignInButtonPresent = await this.commonOptions.isSignInButtonPresent();
+    if (isSignInButtonPresent) {
+      log.info('Clicking proceed to checkout');
       await this.cartPage.clickProceedToCheckout();
       await this.page.waitForLoadState('load');
       await expect.soft(this.page).toHaveTitle(this.signInPageTitle);
+      log.success('Sign in page loads successfully');
       return;
-    } 
-    this.expectedPayableTotal = await this.cartPage.getPayableTotal();
-    console.log(`Payable Total in cart page: ${this.expectedPayableTotal}`);
+    }
+    this.state.payableTotal = await this.cartPage.getPayableTotal();
+    log.info(`Payable Total in cart page: ${this.state.payableTotal}`);
+    log.info('Clicking proceed to checkout');
     await this.cartPage.clickProceedToCheckout();
     await this.page.waitForLoadState('load');
-
     await expect.soft(this.page).toHaveTitle(this.paymentPageTitle);
+    log.success('Payment page loads successfully');
     //await this.page.pause();
   }
 
-  
+  async orderAsGift(expectedPage) {
+    log.info('Clicking order as a gift');
+    const isEmpty = await this.cartPage.isCartEmpty();
+    expect(isEmpty).toBeFalsy();
+    const isSignInButtonPresent = await this.commonOptions.isSignInButtonPresent();
+    if (isSignInButtonPresent) {
+      await this.cartPage.clickOrderAsGift();
+      await this.page.waitForLoadState('load');
+      await expect.soft(this.page).toHaveTitle(this.signInPageTitle);
+      log.success('Sign in page loads successfully');
+      return;
+    }
+    this.state.payableTotal = await this.cartPage.getPayableTotal();
+    log.info(`Payable Total in cart page: ${this.state.payableTotal}`);
+    await this.cartPage.clickOrderAsGift();
+    await this.page.waitForLoadState('load');
+    await expect.soft(this.page).toHaveTitle(this.paymentPageTitle);
+    log.success('Payment page loads successfully');
+    log.info('Filling gift from form ');
+    await this.paymentPage.fillUpGiftToForm();
+    log.info('Enabling gift wrap option');
+    await this.paymentPage.toggleGiftWrap(true);
+    await this.page.pause();
+    let base = Number(this.state.payableTotal.replace('৳', '').trim());
+    let updated = base + 20;
+    this.state.payableTotal = `৳${updated}`;
+    log.info(`New Payable Total after gift wrap: ${this.state.payableTotal}`);
+    await this.page.pause();
+  }
 
   // Select Payment Method
   async selectPaymentMethod(paymentMethod = 'COD') {
-    console.log(`➡ Selecting payment method: ${paymentMethod}`);
+    log.step('In payment page');
+    log.info(`Selecting payment method: ${paymentMethod}`);
     await this.paymentPage.selectPaymentMethod(paymentMethod);
+    this.state.paymentMethod = paymentMethod;
+    //await this.page.pause();
   }
 
   // Confirm Order
   async confirmOrder() {
-    console.log('➡ Confirm order');
+    log.info('Clicking onfirm order');
     const payableTotal = await this.paymentPage.getPayableTotal();
     const confirmOrderButtonTotal = await this.paymentPage.getConfimmOrderButtonTotal();
-    console.log(`Payable Total in payment page: ${payableTotal}`);
-    expect(payableTotal, 'Payable total should be same in payment page').toBe(this.expectedPayableTotal);
-    expect(confirmOrderButtonTotal, 'Confirm order button amount should be same in payment page').toBe(this.expectedPayableTotal);
+    log.info(`Payable Total in payment page: ${payableTotal}`);
+    expect(payableTotal, 'Payable total should be same in payment page').toBe(this.state.payableTotal);
+    expect(confirmOrderButtonTotal, 'Confirm order button amount should be same in payment page').toBe(
+      this.state.payableTotal
+    );
     await this.paymentPage.confirmOrder();
     await this.page.waitForLoadState('load');
-    await expect.soft(this.page).toHaveTitle(this.confirmedOrderPageTitle);
-    //await this.page.pause();
+    if (this.state.paymentMethod === 'cod' || this.state.paymentMethod === 'rocket') {
+      await expect.soft(this.page).toHaveTitle(this.confirmedOrderPageTitle);
+      log.success('Confirmed order page loads successfully');
+    }
+    await this.page.pause();
   }
 
-  async handleOnlinePaymentGateway(paymentMethod){
-    console.log('➡ Handling online payment gateway');
-    if (paymentMethod === 'BKASH') {
-      console.log('Handling Bkash payment gateway...');
-      await bkashPage(this.page, this.expectedDomain, this.bkashPageTitle, this.myOrderPagePath, this.expectedPayableTotal);
+  async handleOnlinePaymentGateway(paymentMethod) {
+    log.step(`In ${paymentMethod} payment gateway page`);
+    const currentUrl = await this.page.url();
+    const currentDomain = new URL(currentUrl).origin;
+    const expectedDomain = testData.domain[paymentMethod];
+    expect.soft(currentDomain, `Should navigate to ${paymentMethod} payment gateway`).toBe(expectedDomain);
+    const expectedTitle = testData.titles.paymentGatewayPage[paymentMethod];
+    await expect.soft(this.page).toHaveTitle(expectedTitle);
+    log.success(`${paymentMethod} payment gateway page loads successfully`);
+    const specificItem = await this.page.locator(testData.locators.paymentGatewayPage[paymentMethod]).first();
+    await specificItem.waitFor({ state: 'visible', timeout: 9000 });
+    if (this.state.paymentMethod === 'card') {
+      let amount = await this.page.locator('.loading-btn__text span').innerText();
+      let numericAmount = parseFloat(amount);
+      let formattedAmount = `৳${numericAmount.toFixed(0)}`;
+      expect.soft(formattedAmount, 'Payable total should match on card page').toBe(this.state.payableTotal);
+      log.info(`Amount on card page: PAY ${formattedAmount}`);
       await this.page.pause();
-    } else if (paymentMethod === 'NAGAD') {
-      console.log('Handling Nagad payment gateway...');
-      await nagadPage(this.page, this.expectedDomain, this.bkashPageTitle, this.myOrderPagePath, this.expectedPayableTotal);
-      // Implement Nagad payment gateway handling here
-    } else if (paymentMethod === 'ROCKET') {
-      console.log('Handling Rocket payment gateway...');
-      // Implement Rocket payment gateway handling here
-    } else if (paymentMethod === 'CARD') {
-      await sslPage(this.page, this.expectedDomain, this.bkashPageTitle, this.myOrderPagePath, this.expectedPayableTotal);
-      await this.page.pause();
-      // Implement Card payment gateway handling here
     }
+    await this.page.pause();
+    await this.page.goto(this.myOrderPagePath);
+    await this.page.waitForLoadState('load');
+    await expect.soft(this.page).toHaveTitle(this.myOrderPageTitle);
+    log.success('Navigated to My Order page after online payment successfully');
   }
 
   // Confirmed Order Page
   async confirmedOrderPageInfo() {
     await this.page.waitForLoadState('load');
-    console.log('➡ Confirmed order page informations');
-    this.expectedOrderId = await this.confirmedOrderPage.getOrderNumber();
-    console.log(`Expected order ID from confirmed order page: ${this.expectedOrderId}`);
+    log.step('In confirmed order page');
+    log.info(`Expected order ID from confirmed order page: ${this.state.orderId}`);
+    this.state.orderId = await this.confirmedOrderPage.getOrderNumber();
     const payableTotal = await this.confirmedOrderPage.getPayableTotal();
-    console.log(`Payable Total in confirmed order page: ${payableTotal}`);
-    expect(payableTotal, 'Payable total should be same in confirmed order page').toBe(this.expectedPayableTotal);
-    console.log(`Expected Order ID: ${this.expectedOrderId}`);
+    log.info(`Payable Total in confirmed order page: ${payableTotal}`);
+    expect(payableTotal, 'Payable total should be same in confirmed order page').toBe(this.state.payableTotal);
     //await this.page.pause();
   }
 
   // Go to Track Order Page
   async goToTrackOrder() {
-    console.log('➡ Go to track order');
-    await this.confirmedOrderPage.clickTrackOrder();
+    const currentPagePath = new URL(await this.page.url()).pathname;
+    log.info(`Current page path: ${currentPagePath}`);
+    if (currentPagePath.includes(this.myOrderPagePath)) {
+      log.info('Going to track order from my order page');
+      await this.myOrderPage.clickTrackMyOrder();
+    } else {
+      log.info('Going to track order from confirmed order page');
+      await this.confirmedOrderPage.clickTrackOrder();
+    }
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.trackOrderPageTitle);
+    log.success('Track order page loads successfully');
+    log.step('In track order page');
+    const orderNumber = await this.trackOrderPage.getOrderNumber();
+    log.info(`Tracked Order Number: ${orderNumber}`);
+    if (this.state.orderId === null) {
+      this.state.orderId = orderNumber;
+    }
     //await this.page.pause();
   }
 
   // Track Order Page
-  async trackOrderPageInfo() {
-    console.log('➡ Track order informations');
+  async trackOrderPageInfo(paymentMethod = 'cod') {
+    log.step('In track order page');
     const orderNumber = await this.trackOrderPage.getOrderNumber();
-    console.log(`Tracked Order Number: ${orderNumber}`);
-    expect(orderNumber, 'Order number in track order page should match the confirmed order page').toBe(this.expectedOrderId);
+    log.info(`Tracked Order Number: ${orderNumber}`);
+    expect(orderNumber, 'Order number in track order page should match the confirmed order page').toBe(
+      this.state.orderId
+    );
     const payableTotal = await this.trackOrderPage.getPayableTotal();
-    console.log(`Payable Total in track order page: ${payableTotal}`);
-    expect(payableTotal, 'Payable total should be same in track order page').toBe(this.expectedPayableTotal);
+    log.info(`Payable Total in track order page: ${payableTotal}`);
+    expect(payableTotal, 'Payable total should be same in track order page').toBe(this.state.payableTotal);
     //await this.page.pause();
   }
 
   // Go to My Orders Page
   async goToMyOrder() {
-    console.log('➡ Go to My Orders');
+    log.info('Open my section menu and go to My Orders page');
     await this.commonOptions.goToMyOrder();
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.myOrderPageTitle);
+    log.success('My Orders page loads successfully');
     //await this.page.pause();
   }
 
   // My Order Page
   async myOrderPageInfo() {
-    console.log('➡ My Orders page informations');
-    const isOrderFound = await this.myOrderPage.isOrderFound(this.expectedOrderId);
-    console.log(`Order matched in My Orders page: ${isOrderFound}`);
-    expect(isOrderFound, `Order ID ${this.expectedOrderId} should be found in My Orders`).toBeTruthy();
+    log.info('In my Orders page');
+
+    if (this.state.paymentMethod !== 'cod' || this.state.paymentMethod !== 'rocket' || this.state.orderId === null) {
+      log.warn(`Because of no confirmation page, no order id found for ${this.state.paymentMethod} order`);
+      log.info(`Getting the order id from track order page, then match it with my order page order id`);
+      this.goToTrackOrder();
+    }
+    const isOrderFound = await this.myOrderPage.isOrderFound(this.state.orderId);
+    log.success(`Order matched in My Orders page: ${isOrderFound}`);
+    expect(isOrderFound, `Order ID ${this.state.orderId} should be found in My Orders`).toBeTruthy();
     const payable = await this.myOrderPage.getPayableTotal();
-    console.log(`Payable Total in my order page: ${payable}`);
-    expect(payable, 'Payable total should be same in my order page').toBe(this.expectedPayableTotal);
-    this.expectedOrderStatus = await this.myOrderPage.getOrderStatus();
-    console.log(`Current order status of my order ${this.expectedOrderId} in my order page: ${this.expectedOrderStatus}`);
-    expect.soft(this.expectedOrderStatus).toBe('PROCESSING');
+    log.info(`Payable Total in my order page: ${payable}`);
+    expect(payable, 'Payable total should be same in my order page').toBe(this.state.payableTotal);
+    this.state.orderStatus = await this.myOrderPage.getOrderStatus();
+    log.info(`Current order status of my order ${this.state.orderId} in my order page: ${this.state.orderStatus}`);
+    expect.soft(this.state.orderStatus).toBe('PROCESSING');
     //await this.page.pause();
   }
 
   // Cancel Test Order
   async cancelTestOrder() {
-    console.log('➡ Canceling test order');
+    log.info('Canceling test order');
     await this.myOrderPage.cancelOrder();
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.myOrderPageTitle);
     const orderStatus = await this.myOrderPage.getOrderStatus();
     expect.soft(orderStatus).toBe('CANCELLED');
-    console.log(`After cancelling, Current order status of my order ${this.expectedOrderId} in my order page: ${orderStatus}`);
+    log.info(
+      `After cancelling, Current order status of my order ${this.state.orderId} in my order page: ${orderStatus}`
+    );
     await this.page.pause();
   }
 }
