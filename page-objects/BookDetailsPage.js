@@ -4,6 +4,7 @@ export class BookDetailsPage {
     this.page = page;
     this.bookTitle = page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'bookName')]`);
     this.authorName = page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'authorName')]`);
+    this.ebookSection = page.locator('.ebookSection-module-scss-module__yOwVFW__ebookButtonContainer')
     this.buyToReadButton = page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'authorName')]`);
     this.ebookPrice = page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'authorName')]`);
 
@@ -68,7 +69,15 @@ export class BookDetailsPage {
   }
 
   async getEbookPrice() {
-    const ebookPrice = this.page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'authorName')]`);
+    expect(this.ebookSection, 'Ebook section should be visible').toBeVisible();
+    const ebookPrice = this.ebookSection.locator(`xpath=//*[contains(@class, 'ebookSection') and contains(@class, 'ebookInfo')]`);
+    await expect(ebookPrice, 'Ebook price should be visible').toBeVisible();
     return await this.ebookPrice?.innerText();
+  }
+  async clickBuyEbook() {
+    expect(this.ebookSection, 'Ebook section should be visible').toBeVisible();
+    const buyEbookButton = this.page.locator(`xpath=//*[contains(@class, 'button') and contains(@class, 'detailBuyEbookSmall')]`);
+    await expect(buyEbookButton, 'Buy to Read button should be visible').toBeVisible();
+    await buyEbookButton.click();
   }
 }

@@ -41,11 +41,9 @@ test.describe('Master Order Flow', () => {
   test.skip('Normal Order Flow (COD)', async ({ page }) => {
     const helper = new OrderHelper(page);
     await helper.openHomePage();
-    await helper.goToSignIn();
     await helper.signIn(email, password, 'home');
-    await helper.searchForABook(searchKeyword);
-    await helper.goToBookDetails(productTitle);
-    await helper.displayBookInformations();
+    await helper.searchForABook(searchKeyword, productTitle);
+    await helper.bookDetails();
     await helper.addToCart();
     await helper.goToCart();
     await helper.selectProduct(productId);
@@ -93,9 +91,8 @@ test.describe('Master Order Flow', () => {
   test('Abroad/Foreign order', async ({ page }) => {
     const helper = new OrderHelper(page);
     await helper.openHomePage();
-    await helper.searchForABook(searchKeyword);
-    await helper.goToBookDetails(productTitle);
-    await helper.displayBookInformations();
+    await helper.searchForABook(searchKeyword, productTitle);
+    await helper.bookDetails();
     await helper.addToCart();
     await helper.goToCart();
     await helper.proceedToCheckout('login');
@@ -106,11 +103,10 @@ test.describe('Master Order Flow', () => {
     await helper.selectPaymentMethod(paymentMethodCard);
     await page.pause();
     await helper.confirmOrder();
-    await helper.handleOnlinePaymentGateway(paymentMethodCard);
+    await helper.handleOnlinePaymentGateway();
     await page.pause();
-    await helper.myOrderPageInfo();
-    await helper.goToTrackOrder();
-    await helper.trackOrderPageInfo(paymentMethodBkash);
+    await helper.myOrder();
+    await helper.trackOrder();
     await page.pause();
     await page.close();
     //await helper.cancelTestOrder();

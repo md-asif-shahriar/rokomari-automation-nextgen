@@ -18,6 +18,7 @@ const testData = {
   locators:{
     paymentGatewayPage:{
       bkash: '#WALLET',
+      nagad: '#account-form',
       card: '#tapImg'
     }
   }, 
@@ -30,8 +31,8 @@ const testData = {
     card: 'card',
   },
   domain: {
-    bkash: 'https://sandbox.payment.bkash.com',
-    nagad: 'NAGAD',
+    bkash: 'https://payment.bkash.com', //https://sandbox.payment.bkash.com
+    nagad: 'https://payment.mynagad.com:30000',
     rocket: 'ROCKET',
     cod: 'COD',
     card: 'https://epay-gw.sslcommerz.com',
@@ -50,7 +51,7 @@ const testData = {
     myOrderPage: 'My Orders | Rokomari.com',
     paymentGatewayPage: {
       bkash: 'Agreement only',
-      nagad: 'easyCheckout',
+      nagad: 'Nagad Payment Page: Account',
       rocket: 'easyCheckout',
       ssl: 'easyCheckout',
     }
@@ -65,9 +66,10 @@ const testData = {
     bookDetailsPage: '/book/195175/bela-furabar-age',
     cartPage: '/cart',
     shippingPage: '/shipping',
-    confirmedOrderPage: '/order-confirmation',
+    confirmedOrderPage: '/confirmation',
     trackOrderPage: '/ordertrack',
     myOrderPage: '/my-section/orders',
+    ebookPaymentPage: '/payment/ebook',
   }
 
 };

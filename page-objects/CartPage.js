@@ -94,7 +94,7 @@ export class CartPage {
     await changeButton.click();
     await expect(this.overlay, 'Overlay should be visible').toBeVisible({ timeout: 2500 });
     await expect(this.addressModalCloseButton, 'Address modal form should be visible').toBeVisible({ timeout: 2500 });
-    await this.page.waitForTimeout(3000);
+    //await this.page.waitForTimeout(3000);
     //await this.page.pause();
     let addressContainers = await this.page.locator(`xpath=//*[contains(@class, 'shippingAddressList') and contains(@class, 'popupaddressContainer')]`);
     let addressCount = await addressContainers.count();
@@ -146,7 +146,6 @@ export class CartPage {
     } else {
       console.log('❌ Proceed to checkout button is disabled');
     }
-    await this.page.waitForLoadState('load');
   }
   async clickOrderAsGift() {
     console.log('Order as gift...');

@@ -10,6 +10,7 @@ import { ConfirmedOrderPage } from '../page-objects/ConfirmedOrderPage';
 import { TrackOrderPage } from '../page-objects/TrackOrderPage';
 import { MyOrderPage } from '../page-objects/MyOrderPage';
 import { CommonOptions } from '../page-objects/CommonOptions';
+import { nagad, card } from '../page-objects/OnlinePayment.js';
 import log from '../utils/logger.js';
 
 export default class OrderHelper {
@@ -66,43 +67,42 @@ export default class OrderHelper {
     expect.soft(this.page.url()).toMatch(this.homePagePath);
     log.success('Home page loads successfully');
   }
-  async goToSignIn() {
-    log.step('In home page');
-    log.info('Click sign in button');
-    await this.commonOptions.clickSignIn();
-    await this.page.waitForLoadState('load');
-    await expect.soft(this.page).toHaveTitle(this.signInPageTitle);
-    //expect.soft(this.page.url()).toMatch(this.homePagePath);
-    log.success('Sign in page loads successfully');
-    log.step('In sign in page');
-  }
 
   // Sign In
   async signIn(email, password, expectedPage) {
-    log.info('Perform sign in with email and password');
-    await this.signInPage.login(email, password);
-    await this.page.waitForLoadState('load');
-    if (expectedPage === 'home') {
-      await expect.soft(this.page).toHaveTitle(this.homePageTitle);
-      log.success('Home page loads successfully');
-    } else if (expectedPage === 'cart') {
+    if (expectedPage === 'cart') {
+      log.step('In sign in page');
+      await expect.soft(this.page).toHaveTitle(this.signInPageTitle);
+      log.success('Sign in page loads successfully');
+      await this.signInPage.login(email, password);
+      await this.page.waitForLoadState('load');
       await expect.soft(this.page).toHaveTitle(this.cartPageTitle);
       log.success('Cart page loads successfully');
+    }
+    else if (expectedPage === 'home') {
+      log.step('In home page');
+      log.info('Click sign in button');
+      await this.commonOptions.clickSignIn();
+      await this.page.waitForLoadState('load');
+      await expect.soft(this.page).toHaveTitle(this.signInPageTitle);
+      log.success('Sign in page loads successfully');
+      log.step('In sign in page');
+      log.info('Perform sign in with email and password');
+      await this.signInPage.login(email, password);
+      await this.page.waitForLoadState('load');
+      await expect.soft(this.page).toHaveTitle(this.homePageTitle);
+      log.success('Home page loads successfully');
     }
   }
 
   // Search for a Book
-  async searchForABook(searchKeyword) {
-    log.info('Searching for a book');
+  async searchForABook(searchKeyword, productTitle) {
+    log.info('Searching for a book, search using: ' + searchKeyword);
     await this.homePage.search(searchKeyword);
     await expect.soft(this.page).toHaveTitle(this.searchResultPageTitle);
     log.success('Search result page loads successfully');
-  }
-
-  // Go to Book Details Page
-  async goToBookDetails(productTitle) {
     log.step('In search result page');
-    test.info(`Going to book details for: ${productTitle}`);
+    test.info(`Looking for a book named: ${productTitle}`);
     const productLocator = await this.searchResultPage.isProductFound(productTitle);
     if (productLocator && (await productLocator.count()) > 0) {
       log.success(`Search service is working properly. Product found: ${productTitle}`);
@@ -115,7 +115,7 @@ export default class OrderHelper {
     }
   }
 
-  async displayBookInformations() {
+  async bookDetails() {
     log.step('In book details page');
     log.info(`Title: ${await this.bookDetailsPage.getTitle()}`);
     log.info(`Book Title: ${await this.bookDetailsPage.getBookTitle()}`);
@@ -176,15 +176,16 @@ export default class OrderHelper {
       await this.page.waitForLoadState('load');
       await expect.soft(this.page).toHaveTitle(this.signInPageTitle);
       log.success('Sign in page loads successfully');
-      return;
+      console.log(`Page url: ${await this.page.title()}`);
+    } else {
+      this.state.payableTotal = await this.cartPage.getPayableTotal();
+      log.info(`Payable Total in cart page: ${this.state.payableTotal}`);
+      log.info('Clicking proceed to checkout');
+      await this.cartPage.clickProceedToCheckout();
+      await this.page.waitForLoadState('load');
+      await expect.soft(this.page).toHaveTitle(this.paymentPageTitle);
+      log.success('Payment page loads successfully');
     }
-    this.state.payableTotal = await this.cartPage.getPayableTotal();
-    log.info(`Payable Total in cart page: ${this.state.payableTotal}`);
-    log.info('Clicking proceed to checkout');
-    await this.cartPage.clickProceedToCheckout();
-    await this.page.waitForLoadState('load');
-    await expect.soft(this.page).toHaveTitle(this.paymentPageTitle);
-    log.success('Payment page loads successfully');
     //await this.page.pause();
   }
 
@@ -238,6 +239,18 @@ export default class OrderHelper {
       this.state.payableTotal
     );
     await this.paymentPage.confirmOrder();
+    const urlObj = await this.page.waitForURL((url) => url.toString().includes('/confirmation?orderid='), {
+      timeout: 3000
+    });
+
+    const orderId = new URL(urlObj.toString()).searchParams.get('orderid');
+
+    if (!orderId) {
+      throw new Error(`❌ Could not extract order id from URL: ${urlObj}`);
+    }
+
+    console.log('🧾 Captured Order ID before redirect:', orderId);
+
     await this.page.waitForLoadState('load');
     if (this.state.paymentMethod === 'cod' || this.state.paymentMethod === 'rocket') {
       await expect.soft(this.page).toHaveTitle(this.confirmedOrderPageTitle);
@@ -246,30 +259,34 @@ export default class OrderHelper {
     await this.page.pause();
   }
 
-  async handleOnlinePaymentGateway(paymentMethod) {
-    log.step(`In ${paymentMethod} payment gateway page`);
+  async handleOnlinePaymentGateway() {
+    log.step(`In ${this.state.paymentMethod} payment gateway page`);
     const currentUrl = await this.page.url();
     const currentDomain = new URL(currentUrl).origin;
-    const expectedDomain = testData.domain[paymentMethod];
-    expect.soft(currentDomain, `Should navigate to ${paymentMethod} payment gateway`).toBe(expectedDomain);
-    const expectedTitle = testData.titles.paymentGatewayPage[paymentMethod];
+    const expectedDomain = testData.domain[this.state.paymentMethod];
+    expect.soft(currentDomain, `Should navigate to ${this.state.paymentMethod} payment gateway`).toBe(expectedDomain);
+    const expectedTitle = testData.titles.paymentGatewayPage[this.state.paymentMethod];
     await expect.soft(this.page).toHaveTitle(expectedTitle);
-    log.success(`${paymentMethod} payment gateway page loads successfully`);
-    const specificItem = await this.page.locator(testData.locators.paymentGatewayPage[paymentMethod]).first();
+    log.success(`${this.state.paymentMethod} payment gateway page loads successfully`);
+    const specificItem = await this.page
+      .locator(testData.locators.paymentGatewayPage[this.state.paymentMethod])
+      .first();
     await specificItem.waitFor({ state: 'visible', timeout: 9000 });
     if (this.state.paymentMethod === 'card') {
-      let amount = await this.page.locator('.loading-btn__text span').innerText();
-      let numericAmount = parseFloat(amount);
-      let formattedAmount = `৳${numericAmount.toFixed(0)}`;
-      expect.soft(formattedAmount, 'Payable total should match on card page').toBe(this.state.payableTotal);
+      let cardAmount = await card(this.page);
+      expect.soft(cardAmount, 'Payable total should match on card page').toBe(this.state.payableTotal);
       log.info(`Amount on card page: PAY ${formattedAmount}`);
       await this.page.pause();
+    } else if (this.state.paymentMethod === 'nagad') {
+      let nagadAmount = await nagad(this.page);
+      expect.soft(nagadAmount, 'Payable total should match on nagad page').toBe(this.state.payableTotal);
+      log.info(`Amount on nagad page: BDT ${amount}.00`);
     }
     await this.page.pause();
     await this.page.goto(this.myOrderPagePath);
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.myOrderPageTitle);
-    log.success('Navigated to My Order page after online payment successfully');
+    log.success('Navigated to my order page after online payment successfully');
   }
 
   // Confirmed Order Page
@@ -285,7 +302,7 @@ export default class OrderHelper {
   }
 
   // Go to Track Order Page
-  async goToTrackOrder() {
+  async trackOrder() {
     const currentPagePath = new URL(await this.page.url()).pathname;
     log.info(`Current page path: ${currentPagePath}`);
     if (currentPagePath.includes(this.myOrderPagePath)) {
@@ -302,19 +319,15 @@ export default class OrderHelper {
     const orderNumber = await this.trackOrderPage.getOrderNumber();
     log.info(`Tracked Order Number: ${orderNumber}`);
     if (this.state.orderId === null) {
+      log.warn(
+        `No order id found because of payment method ${this.state.paymentMethod}, collecting order id from track order page`
+      );
       this.state.orderId = orderNumber;
+    } else {
+      expect(orderNumber, 'Order number in track order page should match the confirmed order page').toBe(
+        this.state.orderId
+      );
     }
-    //await this.page.pause();
-  }
-
-  // Track Order Page
-  async trackOrderPageInfo(paymentMethod = 'cod') {
-    log.step('In track order page');
-    const orderNumber = await this.trackOrderPage.getOrderNumber();
-    log.info(`Tracked Order Number: ${orderNumber}`);
-    expect(orderNumber, 'Order number in track order page should match the confirmed order page').toBe(
-      this.state.orderId
-    );
     const payableTotal = await this.trackOrderPage.getPayableTotal();
     log.info(`Payable Total in track order page: ${payableTotal}`);
     expect(payableTotal, 'Payable total should be same in track order page').toBe(this.state.payableTotal);
@@ -322,26 +335,15 @@ export default class OrderHelper {
   }
 
   // Go to My Orders Page
-  async goToMyOrder() {
+  async myOrder() {
     log.info('Open my section menu and go to My Orders page');
     await this.commonOptions.goToMyOrder();
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.myOrderPageTitle);
     log.success('My Orders page loads successfully');
-    //await this.page.pause();
-  }
-
-  // My Order Page
-  async myOrderPageInfo() {
     log.info('In my Orders page');
-
-    if (this.state.paymentMethod !== 'cod' || this.state.paymentMethod !== 'rocket' || this.state.orderId === null) {
-      log.warn(`Because of no confirmation page, no order id found for ${this.state.paymentMethod} order`);
-      log.info(`Getting the order id from track order page, then match it with my order page order id`);
-      this.goToTrackOrder();
-    }
     const isOrderFound = await this.myOrderPage.isOrderFound(this.state.orderId);
-    log.success(`Order matched in My Orders page: ${isOrderFound}`);
+    log.success(`Order id matched in My Orders page: ${isOrderFound}`);
     expect(isOrderFound, `Order ID ${this.state.orderId} should be found in My Orders`).toBeTruthy();
     const payable = await this.myOrderPage.getPayableTotal();
     log.info(`Payable Total in my order page: ${payable}`);
