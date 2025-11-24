@@ -34,7 +34,7 @@ const testData = {
     bkash: 'https://payment.bkash.com', //https://sandbox.payment.bkash.com
     nagad: 'https://payment.mynagad.com:30000',
     rocket: 'ROCKET',
-    cod: 'COD',
+    cod: 'http://94.74.82.109:3000',
     card: 'https://epay-gw.sslcommerz.com',
   },
 

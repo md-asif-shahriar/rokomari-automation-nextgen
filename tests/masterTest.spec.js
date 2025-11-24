@@ -24,21 +24,21 @@ let browser;
   let productTitle = testData.productTitle;
 
 
-
-// test.beforeAll(async () => {
-//   // Setup code if needed (like initializing a browser or logging in)
-//   console.log('Running before all tests');
-//   browser = await playwright.chromium.launch({ headless: false });
-// });
-
-// test.afterAll(async () => {
-//   // Cleanup code if needed
-//   console.log('Running after all tests');
-//   await page.close();
-// });
-
 test.describe('Master Order Flow', () => {
-  test.skip('Normal Order Flow (COD)', async ({ page }) => {
+
+  // This runs after each test automatically
+  test.afterEach(async ({ page }, testInfo) => {
+    console.log(`Closing browser for: ${testInfo.title}`);
+    await page.close();
+    console.log('Browser closed after test');
+  });
+
+  // This runs after all tests in this describe block
+  test.afterAll(async () => {
+    console.log('✅ All tests done!');
+  });
+
+  test('Normal Order Flow (COD)', async ({ page }) => {
     const helper = new OrderHelper(page);
     await helper.openHomePage();
     await helper.signIn(email, password, 'home');
@@ -52,22 +52,16 @@ test.describe('Master Order Flow', () => {
     await helper.selectPaymentMethod(paymentMethodCOD);
     await helper.confirmOrder();
     await helper.confirmedOrderPageInfo();
-    await helper.goToTrackOrder();
-    await helper.trackOrderPageInfo();
-    await helper.goToMyOrder();
-    await helper.myOrderPageInfo();
+    await helper.trackOrder();
+    await helper.myOrder();
     await page.pause();
-    await page.close();
     //await helper.cancelTestOrder();
-    //await page.pause();
-    //await page.close();
   });
-  test.skip('Sign in after place order flow', async ({ page }) => {
+  test('Sign in after place order flow', async ({ page }) => {
     const helper = new OrderHelper(page);
     await helper.openHomePage();
-    await helper.searchForABook(searchKeyword);
-    await helper.goToBookDetails(productTitle);
-    await helper.displayBookInformations();
+    await helper.searchForABook(searchKeyword, productTitle);
+    await helper.bookDetails();
     await helper.addToCart();
     await helper.goToCart();
     await helper.proceedToCheckout('login');
@@ -76,14 +70,12 @@ test.describe('Master Order Flow', () => {
     await helper.selectShippingAddress(countryBD);
     await helper.proceedToCheckout('payment');
     await helper.selectPaymentMethod(paymentMethodCOD);
-    await helper.confirmOrder();
-    await helper.confirmedOrderPageInfo();
-    await helper.goToTrackOrder();
-    await helper.trackOrderPageInfo();
-    await helper.goToMyOrder();
-    await helper.myOrderPageInfo();
     await page.pause();
-    await page.close();
+    await helper.confirmOrder();
+    await helper.handleOnlinePaymentGateway();
+    await helper.myOrder();
+    await helper.trackOrder();
+    await page.pause();
     //await helper.cancelTestOrder();
     //await page.pause();
     //await page.close();

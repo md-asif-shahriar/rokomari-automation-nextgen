@@ -21,6 +21,10 @@ export class CartPage {
     this.shippingAddressHeader = page.locator(
       `xpath=//*[contains(@class, 'cartShippingAddress') and contains(@class, 'header')]`
     );
+    this.yourTotal = page.locator(
+      `xpath=//*[contains(@class, 'cartHeader') and contains(@class, 'cartSummary')]`
+    );
+
 
     this.addShippingAddressButton = page.locator('button:has-text("+ Add Shipping Address")');
     this.addAddressPopup = page.locator('.shippingAddressForm-module-scss-module__Hsp-IW__container');
@@ -67,14 +71,16 @@ export class CartPage {
       await this.selectAllCheckbox.click();
     } else {
       await this.selectAllCheckbox.click();
-      await this.page.waitForTimeout(2000);
+      await this.yourTotal.waitFor({ state: 'visible' });
       await this.selectAllCheckbox.click();
+      await this.yourTotal.waitFor({ state: 'hidden' });
     }
     const productLocator = this.page.locator(
       `xpath=//*[@id="ts--cart-product-item-${productId}"]//*[contains(@class, "cartItem") and contains(@class, "checkboxContainer")]`
     );
+    await productLocator.waitFor({ state: 'visible' });
     await productLocator.click();
-    await this.page.waitForTimeout(2000);
+    await this.yourTotal.waitFor({ state: 'visible' });
   }
 
   async getCurrentAddress() {
@@ -95,8 +101,8 @@ export class CartPage {
     await expect(this.overlay, 'Overlay should be visible').toBeVisible({ timeout: 2500 });
     await expect(this.addressModalCloseButton, 'Address modal form should be visible').toBeVisible({ timeout: 2500 });
     //await this.page.waitForTimeout(3000);
-    //await this.page.pause();
     let addressContainers = await this.page.locator(`xpath=//*[contains(@class, 'shippingAddressList') and contains(@class, 'popupaddressContainer')]`);
+    await addressContainers.first().waitFor({ state: 'visible' });
     let addressCount = await addressContainers.count();
     console.log(`Total addresses found: ${addressCount}`);
     for (let i = 0; i < addressCount; i++) {

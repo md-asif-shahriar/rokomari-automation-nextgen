@@ -66,6 +66,12 @@ export default class OrderHelper {
     await expect.soft(this.page).toHaveTitle(this.homePageTitle);
     expect.soft(this.page.url()).toMatch(this.homePagePath);
     log.success('Home page loads successfully');
+    this.state = {
+      payableTotal: null,
+      paymentMethod: null,
+      orderId: null,
+      orderStatus: null
+    };
   }
 
   // Sign In
@@ -78,8 +84,7 @@ export default class OrderHelper {
       await this.page.waitForLoadState('load');
       await expect.soft(this.page).toHaveTitle(this.cartPageTitle);
       log.success('Cart page loads successfully');
-    }
-    else if (expectedPage === 'home') {
+    } else if (expectedPage === 'home') {
       log.step('In home page');
       log.info('Click sign in button');
       await this.commonOptions.clickSignIn();
@@ -230,26 +235,29 @@ export default class OrderHelper {
 
   // Confirm Order
   async confirmOrder() {
-    log.info('Clicking onfirm order');
     const payableTotal = await this.paymentPage.getPayableTotal();
     const confirmOrderButtonTotal = await this.paymentPage.getConfimmOrderButtonTotal();
     log.info(`Payable Total in payment page: ${payableTotal}`);
-    expect(payableTotal, 'Payable total should be same in payment page').toBe(this.state.payableTotal);
+    expect.soft(payableTotal, 'Payable total should be same in payment page').toBe(this.state.payableTotal);
     expect(confirmOrderButtonTotal, 'Confirm order button amount should be same in payment page').toBe(
       this.state.payableTotal
     );
+    log.info('Clicking onfirm order');
     await this.paymentPage.confirmOrder();
-    const urlObj = await this.page.waitForURL((url) => url.toString().includes('/confirmation?orderid='), {
-      timeout: 3000
-    });
-
-    const orderId = new URL(urlObj.toString()).searchParams.get('orderid');
-
-    if (!orderId) {
-      throw new Error(`❌ Could not extract order id from URL: ${urlObj}`);
+    //expppppppppppppppp
+    await this.page.waitForURL('**/*orderid=*', { timeout: 10000 });
+    // Extract the order ID
+    const currentUrl = await this.page.url();
+    console.log('Current URL:', currentUrl);
+    const urlParams = new URLSearchParams(new URL(currentUrl).search);
+    console.log('URL Parameters:', urlParams);
+    const orderId = urlParams.get('orderid');
+    console.log('Order ID:', orderId);
+    if (orderId) {
+      this.state.orderId = orderId;
+      log.info(`Order ID extracted: ${this.state.orderId}`);
     }
-
-    console.log('🧾 Captured Order ID before redirect:', orderId);
+    //exppppppppppppppppppppp
 
     await this.page.waitForLoadState('load');
     if (this.state.paymentMethod === 'cod' || this.state.paymentMethod === 'rocket') {
@@ -275,12 +283,12 @@ export default class OrderHelper {
     if (this.state.paymentMethod === 'card') {
       let cardAmount = await card(this.page);
       expect.soft(cardAmount, 'Payable total should match on card page').toBe(this.state.payableTotal);
-      log.info(`Amount on card page: PAY ${formattedAmount}`);
+      log.info(`Amount on card page: PAY ${cardAmount}`);
       await this.page.pause();
     } else if (this.state.paymentMethod === 'nagad') {
       let nagadAmount = await nagad(this.page);
       expect.soft(nagadAmount, 'Payable total should match on nagad page').toBe(this.state.payableTotal);
-      log.info(`Amount on nagad page: BDT ${amount}.00`);
+      log.info(`Amount on nagad page: BDT ${nagadAmount}.00`);
     }
     await this.page.pause();
     await this.page.goto(this.myOrderPagePath);
@@ -293,11 +301,15 @@ export default class OrderHelper {
   async confirmedOrderPageInfo() {
     await this.page.waitForLoadState('load');
     log.step('In confirmed order page');
-    log.info(`Expected order ID from confirmed order page: ${this.state.orderId}`);
-    this.state.orderId = await this.confirmedOrderPage.getOrderNumber();
+    if(this.state.orderId===null){
+      log.info('Order is null');
+      log.info(`Expected order ID from confirmed order page: ${this.state.orderId}`);
+      this.state.orderId = await this.confirmedOrderPage.getOrderNumber();
+    }
+    
     const payableTotal = await this.confirmedOrderPage.getPayableTotal();
     log.info(`Payable Total in confirmed order page: ${payableTotal}`);
-    expect(payableTotal, 'Payable total should be same in confirmed order page').toBe(this.state.payableTotal);
+    expect.soft(payableTotal, 'Payable total should be same in confirmed order page').toBe(this.state.payableTotal);
     //await this.page.pause();
   }
 
@@ -330,7 +342,7 @@ export default class OrderHelper {
     }
     const payableTotal = await this.trackOrderPage.getPayableTotal();
     log.info(`Payable Total in track order page: ${payableTotal}`);
-    expect(payableTotal, 'Payable total should be same in track order page').toBe(this.state.payableTotal);
+    expect.soft(payableTotal, 'Payable total should be same in track order page').toBe(this.state.payableTotal);
     //await this.page.pause();
   }
 
