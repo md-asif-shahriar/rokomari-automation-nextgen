@@ -34,7 +34,6 @@ export class MyOrderPage {
     await expect(cancelOrderButton, 'Cancel Order button should be visible').toBeVisible();
     await cancelOrderButton.click();
 
-    await this.page.pause();
 
     const overlay = this.page.locator('#js--modal-overlay');
     await expect(overlay, 'Overlay should be visible').toBeVisible();

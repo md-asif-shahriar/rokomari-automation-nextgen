@@ -1,8 +1,11 @@
 const testData = {
   viewDetailsProductId: 188342,
   cartProductId: 188342,
+  ebookId: 195175,
   searchKeyword: 'ahkamun nisa',
+  searchKeywordEbook: 'bela furabar age',
   productTitle: 'আহকামুন নিসা',
+  productTitleEbook: 'বেলা ফুরাবার আগে',
   localAddress: {
     name: 'Rok T',
     phone: '01711112222',

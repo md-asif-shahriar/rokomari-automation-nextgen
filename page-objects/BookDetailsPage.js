@@ -4,9 +4,10 @@ export class BookDetailsPage {
     this.page = page;
     this.bookTitle = page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'bookName')]`);
     this.authorName = page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'authorName')]`);
-    this.ebookSection = page.locator('.ebookSection-module-scss-module__yOwVFW__ebookButtonContainer')
-    this.buyToReadButton = page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'authorName')]`);
-    this.ebookPrice = page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'authorName')]`);
+    this.ebookSection = page.locator('.ebookSection-module-scss-module__yOwVFW__ebookButtonContainer');
+    this.ebookSection = page.locator(`xpath=//*[contains(@class, 'ebookSection') and contains(@class, 'ebookButtonContainer')]`);
+    this.buyToReadButton = page.getByRole('button', { name: 'Buy eBook' });
+    this.ebookPrice = page.locator(`xpath=//*[contains(@class, 'ebookSection') and contains(@class, 'ebookInfo')]`);
 
     this.addToCartButton = page.locator('#js--details-main-add-to-cart-button');
     this.addToCartButtonText = page.locator('#js--details-main-add-to-cart-button span#js--add-to-cart-button');
@@ -69,10 +70,11 @@ export class BookDetailsPage {
   }
 
   async getEbookPrice() {
-    expect(this.ebookSection, 'Ebook section should be visible').toBeVisible();
-    const ebookPrice = this.ebookSection.locator(`xpath=//*[contains(@class, 'ebookSection') and contains(@class, 'ebookInfo')]`);
+    await expect(this.ebookSection, 'Ebook section should be visible').toBeVisible();
+    const ebookPrice = await this.ebookSection.locator(`xpath=//*[contains(@class, 'ebookSection') and contains(@class, 'ebookInfo')]//span`);
     await expect(ebookPrice, 'Ebook price should be visible').toBeVisible();
-    return await this.ebookPrice?.innerText();
+    const extractedPrice = (await ebookPrice?.innerText()).replace(/^[A-Za-z]+\s*/, '').trim();
+    return extractedPrice;
   }
   async clickBuyEbook() {
     expect(this.ebookSection, 'Ebook section should be visible').toBeVisible();

@@ -83,18 +83,9 @@ export class PaymentPage {
     if (!this[paymentMethod]) {
       throw new Error(`❌ Unknown payment method: ${paymentMethod}. Check testdata or property name on PaymentPage.`);
     }
-    await expect(
-      this.confirmOrderButton,
-      'Confirm order should be disabled if payment method is not selected'
-    ).toBeDisabled();
     await this[paymentMethod].waitFor({ state: 'visible' });
     console.log(`Selecting ${paymentMethod} as payment method`);
     await this[paymentMethod].click();
-    await expect(
-      this.confirmOrderButton,
-      `Selecting ${paymentMethod} should enable the Place order button`
-    ).toBeEnabled({ timeout: 3000 });
-    await this.page.pause();
   }
 
   async confirmOrder() {

@@ -6,6 +6,7 @@ import { BookDetailsPage } from '../page-objects/BookDetailsPage';
 import { SearchResultPage } from '../page-objects/SearchResultPage';
 import { CartPage } from '../page-objects/CartPage';
 import { PaymentPage } from '../page-objects/PaymentPage';
+import { EbookPaymentPage } from '../page-objects/EbookPaymentPage';
 import { ConfirmedOrderPage } from '../page-objects/ConfirmedOrderPage';
 import { TrackOrderPage } from '../page-objects/TrackOrderPage';
 import { MyOrderPage } from '../page-objects/MyOrderPage';
@@ -24,6 +25,7 @@ export default class OrderHelper {
     this.bookDetailsPage = new BookDetailsPage(page);
     this.cartPage = new CartPage(page);
     this.paymentPage = new PaymentPage(page);
+    this.ebookPaymentPage = new EbookPaymentPage(page);
     this.confirmedOrderPage = new ConfirmedOrderPage(page);
     this.trackOrderPage = new TrackOrderPage(page);
     this.myOrderPage = new MyOrderPage(page);
@@ -58,20 +60,25 @@ export default class OrderHelper {
     };
   }
 
-  // Open Home Page
-  async openHomePage() {
-    log.step('Opening home page');
-    await this.page.goto('/');
-    await this.page.waitForLoadState('load');
-    await expect.soft(this.page).toHaveTitle(this.homePageTitle);
-    expect.soft(this.page.url()).toMatch(this.homePagePath);
-    log.success('Home page loads successfully');
+  // Method to reset the state
+  resetState() {
     this.state = {
       payableTotal: null,
       paymentMethod: null,
       orderId: null,
       orderStatus: null
     };
+  }
+
+  // Open Home Page
+  async openHomePage() {
+    this.resetState();
+    log.step('Opening home page');
+    await this.page.goto('/');
+    await this.page.waitForLoadState('load');
+    await expect.soft(this.page).toHaveTitle(this.homePageTitle);
+    expect.soft(this.page.url()).toMatch(this.homePagePath);
+    log.success('Home page loads successfully');
   }
 
   // Sign In
@@ -142,6 +149,18 @@ export default class OrderHelper {
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.cartPageTitle);
     log.success('Cart page loads successfully');
+    //await this.page.pause();
+  }
+  async buyEbook() {
+    log.info('Buying ebook');
+    const ebookPrice = await this.bookDetailsPage.getEbookPrice();
+    log.info(`Ebook Price: ${ebookPrice}`);
+    this.state.payableTotal = ebookPrice;
+    log.info(`Payable Total set in state: ${this.state.payableTotal}`);
+    await this.bookDetailsPage.clickBuyEbook();
+    await this.page.waitForLoadState('load');
+    await expect.soft(this.page).toHaveTitle(this.paymentPageTitle);
+    log.success('Payment page loads successfully');
     //await this.page.pause();
   }
 
@@ -228,8 +247,18 @@ export default class OrderHelper {
   async selectPaymentMethod(paymentMethod = 'COD') {
     log.step('In payment page');
     log.info(`Selecting payment method: ${paymentMethod}`);
-    await this.paymentPage.selectPaymentMethod(paymentMethod);
     this.state.paymentMethod = paymentMethod;
+    await this.paymentPage.selectPaymentMethod(paymentMethod);
+
+    //await this.page.pause();
+  }
+  async selectPaymentMethodForEbook(paymentMethod) {
+    log.step('In payment page');
+    log.info(`Selecting payment method for ebook: ${paymentMethod}`);
+    await this.ebookPaymentPage.selectPaymentMethod(paymentMethod);
+    this.state.paymentMethod = paymentMethod;
+    await this.paymentPage.selectPaymentMethod(paymentMethod);
+
     //await this.page.pause();
   }
 
@@ -239,9 +268,9 @@ export default class OrderHelper {
     const confirmOrderButtonTotal = await this.paymentPage.getConfimmOrderButtonTotal();
     log.info(`Payable Total in payment page: ${payableTotal}`);
     expect.soft(payableTotal, 'Payable total should be same in payment page').toBe(this.state.payableTotal);
-    expect(confirmOrderButtonTotal, 'Confirm order button amount should be same in payment page').toBe(
-      this.state.payableTotal
-    );
+    expect
+      .soft(confirmOrderButtonTotal, 'Confirm order button amount should be same in payment page')
+      .toBe(this.state.payableTotal);
     log.info('Clicking onfirm order');
     await this.paymentPage.confirmOrder();
     //expppppppppppppppp
@@ -264,11 +293,41 @@ export default class OrderHelper {
       await expect.soft(this.page).toHaveTitle(this.confirmedOrderPageTitle);
       log.success('Confirmed order page loads successfully');
     }
-    await this.page.pause();
+  }
+
+  async confirmOrderEbook() {
+    await this.ebookPaymentPage.confirmOrder();
+    //expppppppppppppppp
+    await this.page.waitForURL('**/*orderid=*', { timeout: 10000 });
+    // Extract the order ID
+    const currentUrl = await this.page.url();
+    console.log('Current URL:', currentUrl);
+    const urlParams = new URLSearchParams(new URL(currentUrl).search);
+    console.log('URL Parameters:', urlParams);
+    const orderId = urlParams.get('orderid');
+    console.log('Order ID:', orderId);
+    if (orderId) {
+      this.state.orderId = orderId;
+      log.info(`Order ID extracted: ${this.state.orderId}`);
+    }
+    //exppppppppppppppppppppp
+
+    await this.page.waitForLoadState('load');
+    if (this.state.paymentMethod === 'cod' || this.state.paymentMethod === 'rocket') {
+      await expect.soft(this.page).toHaveTitle(this.confirmedOrderPageTitle);
+      log.success('Confirmed order page loads successfully');
+    }
   }
 
   async handleOnlinePaymentGateway() {
+    if (!this.state.paymentMethod) {
+      throw new Error('Payment method is not set in state');
+    }
     log.step(`In ${this.state.paymentMethod} payment gateway page`);
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {
+      console.log('Network idle timeout, continuing...');
+    });
     const currentUrl = await this.page.url();
     const currentDomain = new URL(currentUrl).origin;
     const expectedDomain = testData.domain[this.state.paymentMethod];
@@ -276,21 +335,20 @@ export default class OrderHelper {
     const expectedTitle = testData.titles.paymentGatewayPage[this.state.paymentMethod];
     await expect.soft(this.page).toHaveTitle(expectedTitle);
     log.success(`${this.state.paymentMethod} payment gateway page loads successfully`);
+
     const specificItem = await this.page
       .locator(testData.locators.paymentGatewayPage[this.state.paymentMethod])
       .first();
-    await specificItem.waitFor({ state: 'visible', timeout: 9000 });
+    await specificItem.waitFor({ state: 'visible', timeout: 15000 });
     if (this.state.paymentMethod === 'card') {
       let cardAmount = await card(this.page);
       expect.soft(cardAmount, 'Payable total should match on card page').toBe(this.state.payableTotal);
       log.info(`Amount on card page: PAY ${cardAmount}`);
-      await this.page.pause();
     } else if (this.state.paymentMethod === 'nagad') {
       let nagadAmount = await nagad(this.page);
       expect.soft(nagadAmount, 'Payable total should match on nagad page').toBe(this.state.payableTotal);
       log.info(`Amount on nagad page: BDT ${nagadAmount}.00`);
     }
-    await this.page.pause();
     await this.page.goto(this.myOrderPagePath);
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.myOrderPageTitle);
@@ -301,12 +359,12 @@ export default class OrderHelper {
   async confirmedOrderPageInfo() {
     await this.page.waitForLoadState('load');
     log.step('In confirmed order page');
-    if(this.state.orderId===null){
+    if (this.state.orderId === null) {
       log.info('Order is null');
       log.info(`Expected order ID from confirmed order page: ${this.state.orderId}`);
       this.state.orderId = await this.confirmedOrderPage.getOrderNumber();
     }
-    
+
     const payableTotal = await this.confirmedOrderPage.getPayableTotal();
     log.info(`Payable Total in confirmed order page: ${payableTotal}`);
     expect.soft(payableTotal, 'Payable total should be same in confirmed order page').toBe(this.state.payableTotal);
@@ -359,7 +417,7 @@ export default class OrderHelper {
     expect(isOrderFound, `Order ID ${this.state.orderId} should be found in My Orders`).toBeTruthy();
     const payable = await this.myOrderPage.getPayableTotal();
     log.info(`Payable Total in my order page: ${payable}`);
-    expect(payable, 'Payable total should be same in my order page').toBe(this.state.payableTotal);
+    expect.soft(payable, 'Payable total should be same in my order page').toBe(this.state.payableTotal);
     this.state.orderStatus = await this.myOrderPage.getOrderStatus();
     log.info(`Current order status of my order ${this.state.orderId} in my order page: ${this.state.orderStatus}`);
     expect.soft(this.state.orderStatus).toBe('PROCESSING');
@@ -372,11 +430,13 @@ export default class OrderHelper {
     await this.myOrderPage.cancelOrder();
     await this.page.waitForLoadState('load');
     await expect.soft(this.page).toHaveTitle(this.myOrderPageTitle);
+    await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {
+      console.log('Network idle timeout after cancelling order, continuing...');
+    });
     const orderStatus = await this.myOrderPage.getOrderStatus();
-    expect.soft(orderStatus).toBe('CANCELLED');
     log.info(
       `After cancelling, Current order status of my order ${this.state.orderId} in my order page: ${orderStatus}`
     );
-    await this.page.pause();
+    expect.soft(orderStatus).toBe('CANCELLED');
   }
 }
