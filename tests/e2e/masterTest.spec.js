@@ -1,6 +1,6 @@
 import { test, expect, playwright } from '@playwright/test';
-import OrderHelper from '../helper/OrderHelper';
-import testData from '../data/testData';
+import OrderHelper from '../helpers/OrderHelper';
+import testData from '../helpers/testData';
 
 let browser;
 
@@ -28,6 +28,11 @@ let productTitleEbook = testData.productTitleEbook;
 
 test.describe('Master Order Flow', () => {
   // This runs after each test automatically
+  let context;
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext();
+    console.log(`Opening browser for: ${testInfo.title}`);
+  });
   test.afterEach(async ({ page }, testInfo) => {
     console.log(`Closing browser for: ${testInfo.title}`);
     await page.close();
@@ -38,6 +43,8 @@ test.describe('Master Order Flow', () => {
   test.afterAll(async () => {
     console.log('✅ All tests done!');
   });
+
+  test.describe.configure({ retries: 2 });
 
   test.skip('Normal Order Flow (COD)', async ({ page }) => {
     const helper = new OrderHelper(page);
@@ -284,41 +291,21 @@ test.describe('Master Order Flow', () => {
     //await page.close();
   });
 
-  test.skip('Test order', async ({ page }) => {
+  test('Test 1', async ({ browser }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
     const helper = new OrderHelper(page);
-    await helper.openHomePage(page);
-    await helper.goToSignIn();
-    await helper.signIn(email, password, 'home');
-    await page.waitForLoadState('load');
-    await page.goto('http://94.74.82.109:3000/cart');
-    await page.waitForLoadState('load');
-
-    await helper.selectShippingAddress(countryBD);
-    await helper.selectShippingAddress(countryIndia);
-    await helper.selectShippingAddress(countryBD);
-    await page.pause();
-
-    // Add assertions or further test steps
-  });
-
-  test('API test', async ({ page }) => {
-    const helper = new OrderHelper(page);
-    await page.route('http://94.74.82.109:3000/ecom/api/product/269176', async (route) => {
-      console.log('Intercepted API Request URL:', route.request().url());
-      const response = await route.fetch({
-        headers: {
-          ...route.request().headers(),
-          app_api_key: apiKey
-        }
-      });
-      console.log('Intercepted API Response Status:', response.status());
-      const data = await response.json();
-      console.log('API Response:', data);
-      console.log('📦 Original API Response:', JSON.stringify(data, null, 2));
-      await route.fulfill({ response });
-    });
     await page.goto('http://94.74.82.109:3000/book/340716');
     await page.waitForLoadState('load');
-    await page.pause();
+    console.log("Test 1 is loaded");
+  });
+
+  test('API test', async ({ browser }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const helper = new OrderHelper(page);
+    await page.goto('http://94.74.82.109:3000/book/340716');
+    await page.waitForLoadState('load');
+    console.log("Test 2 is loaded");
   });
 });

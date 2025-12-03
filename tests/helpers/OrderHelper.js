@@ -1,18 +1,18 @@
 import { test, expect, playwright } from '@playwright/test';
-import { HomePage } from '../page-objects/HomePage';
-import { SignInPage } from '../page-objects/SignInPage';
-import testData from '../data/testData';
-import { BookDetailsPage } from '../page-objects/BookDetailsPage';
-import { SearchResultPage } from '../page-objects/SearchResultPage';
-import { CartPage } from '../page-objects/CartPage';
-import { PaymentPage } from '../page-objects/PaymentPage';
-import { EbookPaymentPage } from '../page-objects/EbookPaymentPage';
-import { ConfirmedOrderPage } from '../page-objects/ConfirmedOrderPage';
-import { TrackOrderPage } from '../page-objects/TrackOrderPage';
-import { MyOrderPage } from '../page-objects/MyOrderPage';
-import { CommonOptions } from '../page-objects/CommonOptions';
-import { nagad, card } from '../page-objects/OnlinePayment.js';
-import log from '../utils/logger.js';
+import { HomePage } from '../../page-objects/HomePage';
+import { SignInPage } from '../../page-objects/SignInPage';
+import testData from './testData.js';
+import { BookDetailsPage } from '../../page-objects/BookDetailsPage';
+import { SearchResultPage } from '../../page-objects/SearchResultPage';
+import { CartPage } from '../../page-objects/CartPage';
+import { PaymentPage } from '../../page-objects/PaymentPage';
+import { EbookPaymentPage } from '../../page-objects/EbookPaymentPage';
+import { ConfirmedOrderPage } from '../../page-objects/ConfirmedOrderPage';
+import { TrackOrderPage } from '../../page-objects/TrackOrderPage';
+import { MyOrderPage } from '../../page-objects/MyOrderPage';
+import { CommonOptions } from '../../page-objects/CommonOptions';
+import { nagad, card } from '../../page-objects/OnlinePayment.js';
+import log from '../../utils/logger.js';
 
 export default class OrderHelper {
   constructor(page) {

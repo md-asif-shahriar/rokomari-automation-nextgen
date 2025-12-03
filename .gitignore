@@ -12,6 +12,7 @@ Readme.txt
 # IDE/editor folders
 .vscode/
 .idea/
+.cursor/
 
 # Temporary files
 *.tmp
