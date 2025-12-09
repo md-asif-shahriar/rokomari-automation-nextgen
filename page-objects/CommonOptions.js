@@ -1,14 +1,34 @@
 import { expect } from '@playwright/test';
+import log from '../utils/logger.js';
+
 export class CommonOptions {
     constructor(page){
         this.page = page;
-        this.cartIcon = page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'cartContainer')]`);
+    }
+
+    get cartIcon() {
+        return this.page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'cartContainer')]`);
+    }
+
+    get signInButton() {
         //this.signInButton = page.locator('a[href="/login"]'); navigation-module-scss-module__FAVpgG__SignIn
-        this.signInButton = page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'SignIn')]`);
-        this.userName = page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'userContainer')]//span`);
-        this.mySectionDropDownMenu = page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'dropdownContainer')]`);
-        this.mySectionDropDownContainer = page.locator(`.js--user-menu`);
-        this.myOrderMenu = page.locator('a[href="/my-section/orders"]').nth(1);
+        return this.page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'SignIn')]`);
+    }
+
+    get userName() {
+        return this.page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'userContainer')]//span`);
+    }
+
+    get mySectionDropDownMenu() {
+        return this.page.locator(`xpath=//*[contains(@class, 'navigation') and contains(@class, 'dropdownContainer')]`);
+    }
+
+    get mySectionDropDownContainer() {
+        return this.page.locator(`.js--user-menu`);
+    }
+
+    get myOrderMenu() {
+        return this.page.locator('a[href="/my-section/orders"]').nth(1);
     }
 
     async isSignInButtonPresent() {
@@ -22,19 +42,19 @@ export class CommonOptions {
     async goToCartPage() {
         await this.cartIcon.click();
         await this.page.waitForLoadState('load');
-        console.log('✅ Navigated to Cart page');
+        log.success('✅ Navigated to Cart page');
     }
 
     async getUserName() {
         const name = await this.userName.innerText();
-        console.log(`✅ Logged in user name: ${name}`);
+        log.info(`✅ Logged in user name: ${name}`);
         return name;
     }
     async goToMyOrder() {
         await this.mySectionDropDownMenu.click();
         await expect(this.mySectionDropDownContainer, 'Opening my section dropdown menu').toBeVisible();
         await this.myOrderMenu.click();
-        console.log('✅ Navigated to My Order page');
+        log.success('✅ Navigated to My Order page');
     }
 
 }

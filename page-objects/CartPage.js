@@ -1,46 +1,91 @@
 import { expect } from '@playwright/test';
-import exp from 'constants';
+import log from '../utils/logger.js';
+
 export class CartPage {
   constructor(page) {
     this.page = page;
-    this.selectAllCheckboxState = page.locator('#cartSelectAll').first();
-    this.selectAllCheckbox = page
+  }
+
+  get selectAllCheckboxState() {
+    return this.page.locator('#cartSelectAll').first();
+  }
+
+  get selectAllCheckbox() {
+    return this.page
       .locator(`xpath=//*[contains(@class, 'cartHeader') and contains(@class, 'checkboxContainer')]`)
       .first();
+  }
 
-    this.selectedProducts = page.locator('.cart-checked');
-    this.cartItems = page.locator('.cart-item');
+  get selectedProducts() {
+    return this.page.locator('.cart-checked');
+  }
 
-    this.emptyCartText = page.locator('text=Your Cart is Empty!');
-    this.cartProductName = page.locator('.product-title');
-    this.orderAsGiftButton = page.getByRole('button', { name: 'Order as a Gift' });
-    this.proceedToCheckoutButton = page.getByRole('button', { name: 'Proceed to Checkout' });
+  get cartItems() {
+    return this.page.locator('.cart-item');
+  }
 
-    this.shippingAddressSection = page.locator('[id^="addressid-"]');
+  get emptyCartText() {
+    return this.page.locator('text=Your Cart is Empty!');
+  }
 
-    this.shippingAddressHeader = page.locator(
+  get cartProductName() {
+    return this.page.locator('.product-title');
+  }
+
+  get orderAsGiftButton() {
+    return this.page.getByRole('button', { name: 'Order as a Gift' });
+  }
+
+  get proceedToCheckoutButton() {
+    return this.page.getByRole('button', { name: 'Proceed to Checkout' });
+  }
+
+  get shippingAddressSection() {
+    return this.page.locator('[id^="addressid-"]');
+  }
+
+  get shippingAddressHeader() {
+    return this.page.locator(
       `xpath=//*[contains(@class, 'cartShippingAddress') and contains(@class, 'header')]`
     );
-    this.yourTotal = page.locator(
+  }
+
+  get yourTotal() {
+    return this.page.locator(
       `xpath=//*[contains(@class, 'cartHeader') and contains(@class, 'cartSummary')]`
     );
+  }
 
+  get addShippingAddressButton() {
+    return this.page.locator('button:has-text("+ Add Shipping Address")');
+  }
 
-    this.addShippingAddressButton = page.locator('button:has-text("+ Add Shipping Address")');
-    this.addAddressPopup = page.locator('.shippingAddressForm-module-scss-module__Hsp-IW__container');
+  get addAddressPopup() {
+    return this.page.locator(`xpath=//*[contains(@class, 'shippingAddressForm') and contains(@class, 'container')]`);
+  }
 
-    this.overlay = page.locator('#js--modal-overlay');
-    this.addressModalCloseButton = page.locator(
+  get overlay() {
+    return this.page.locator('#js--modal-overlay');
+  }
+
+  get addressModalCloseButton() {
+    return this.page.locator(
       `xpath=//*[contains(@class, 'modal') and contains(@class, 'modalCloseButton')]`
     );
+  }
 
-    this.addressForm = page.locator('.shippingAddressForm-module-scss-module__Hsp-IW__formsContainer');
+  get addressForm() {
+    return this.page.locator(`xpath=//*[contains(@class, 'shippingAddressForm') and contains(@class, 'formsContainer')]`);
+  }
 
-    this.currentAddressSection = page.locator(
+  get currentAddressSection() {
+    return this.page.locator(
       `xpath=//*[contains(@class, 'cartShippingAddress') and contains(@class, 'addressCon')]`
     ).first();
+  }
 
-    this.payableTotalRow = page.locator(
+  get payableTotalRow() {
+    return this.page.locator(
       `xpath=//*[contains(@class, "checkoutSummary") and contains(@class, "rowContainer") and .//span[contains(text(), "Payable Total")]]`
     );
   }
@@ -88,60 +133,64 @@ export class CartPage {
       timeout: 2500
     });
     const currentAddress = await this.currentAddressSection.innerText();
-    console.log('Current address: ', currentAddress);
+    log.info(`Current address: ${currentAddress}`);
     return currentAddress;
   }
 
   async changeShippingAddress(country) {
     try {
-      console.log(`🔄 Changing shipping address to: ${country}`);
-    const previousTotal = await this.getPayableTotal();
-      console.log(`Previous payable total: ${previousTotal}`);
-    await expect(this.currentAddressSection, 'Current address section should be visible').toBeVisible({
-      timeout: 3000
-    });
-    const changeButton = await this.shippingAddressHeader.getByRole('button', { name: 'Change' });
-    await changeButton.click();
-    await expect(this.overlay, 'Overlay should be visible').toBeVisible({ timeout: 3000 });
-    await expect(this.addressModalCloseButton, 'Address modal form should be visible').toBeVisible({ timeout: 3000 });
+      log.info(`🔄 Changing shipping address to: ${country}`);
+      const previousTotal = await this.getPayableTotal();
+      log.info(`Previous payable total: ${previousTotal}`);
+      await expect(this.currentAddressSection, 'Current address section should be visible').toBeVisible({
+        timeout: 3000
+      });
+      const changeButton = await this.shippingAddressHeader.getByRole('button', { name: 'Change' });
+      await changeButton.click();
+      await expect(this.overlay, 'Overlay should be visible').toBeVisible({ timeout: 3000 });
+      await expect(this.addressModalCloseButton, 'Address modal form should be visible').toBeVisible({ timeout: 3000 });
     //await this.page.waitForTimeout(3000);
-    let addressContainers = await this.page.locator(`xpath=//*[contains(@class, 'shippingAddressList') and contains(@class, 'popupaddressContainer')]`);
-    await addressContainers.first().waitFor({ state: 'visible',timeout: 5000 });
-    let addressCount = await addressContainers.count();
-    console.log(`Total addresses found: ${addressCount}`);
-    if (addressCount === 0) {
-        throw new Error('No addresses found in the list');
-    }
-    for (let i = 0; i < addressCount; i++) {
-      const addressContainer = addressContainers.nth(i);
-      // Locate the text span containing the country name (e.g., "Bangladesh")
-      const countryText = await addressContainer
-        .locator(`xpath=//*[contains(@class, 'singleAddress') and contains(@class, 'userAddress')]//span[last()]`)
-        .innerText().catch(() => 'Error: Address not found in the list');
-      if (countryText.includes(country)) {
-        console.log(`✅ Found address with country: ${country}`);
-        const radioButton = addressContainer.locator(`xpath=//*[contains(@class, 'singleAddress') and contains(@class, 'customCheckbox')]`);
-        await radioButton.click();
-        await this.page.waitForLoadState('networkidle', { timeout: 9000 });
-        await expect(this.overlay, 'Overlay should disappear after selecting address').toBeHidden({ timeout: 3000 });
-        await this.page.waitForLoadState('networkidle', { timeout: 9000 });
-        //wait for payable total to update
-        const newTotal = await this.payableTotalRow.locator('span').nth(1).innerText();
-        console.log(`✅ Address changed successfully. New total: ${newTotal}`);
-        return;
+      let addressContainers = await this.page.locator(`xpath=//*[contains(@class, 'shippingAddressList') and contains(@class, 'popupaddressContainer')]`);
+      await addressContainers.first().waitFor({ state: 'visible',timeout: 5000 });
+      let addressCount = await addressContainers.count();
+      log.info(`Total addresses found: ${addressCount}`);
+      if (addressCount === 0) {
+          throw new Error('No addresses found in the list');
       }
-    }
-    console.log(`❌ No address found with country: ${country}`);
+      for (let i = 0; i < addressCount; i++) {
+        const addressContainer = addressContainers.nth(i);
+        // Locate the text span containing the country name (e.g., "Bangladesh")
+        const countryText = await addressContainer
+          .locator(`xpath=//*[contains(@class, 'singleAddress') and contains(@class, 'userAddress')]//span[last()]`)
+          .innerText().catch(() => 'Error: Address not found in the list');
+        if (countryText.includes(country)) {
+          log.success(`✅ Found address with country: ${country}`);
+          const radioButton = addressContainer.locator(`xpath=//*[contains(@class, 'singleAddress') and contains(@class, 'customCheckbox')]`);
+          await radioButton.click();
+          await this.page.waitForLoadState('networkidle', { timeout: 9000 });
+          await expect(this.overlay, 'Overlay should disappear after selecting address').toBeHidden({ timeout: 3000 });
+          await this.page.waitForLoadState('networkidle', { timeout: 9000 });
+          //wait for payable total to update
+          const newTotal = await this.payableTotalRow.locator('span').nth(1).innerText();
+          log.success(`✅ Address changed successfully. New total: ${newTotal}`);
+          return;
+        }
+      }
+      log.error(`❌ No address found with country: ${country}`);
     } catch (error) {
-      console.error(`❌ Error changing shipping address:`, error.message);
+      log.error(`❌ Error changing shipping address: ${error.message}`);
     }
   }
 
   async isEmployeeDiscountApplied(){
-    const employeeDiscountBadge = await this.page.locator('.checkoutSummary-module-scss-module__LKFYTa__rowContainer:has-text("Employee Discount")');
-    const isVisible = await employeeDiscountBadge.isVisible();
-    console.log(`Employee Discount applied: ${isVisible}`);
-    console.log(`Discounr value: ${await employeeDiscountBadge.locator('span').nth(1).innerText()}`);
+    const employeeDiscountBadge = await this.page.locator(`xpath=//*[contains(@class,'checkoutSummary') and contains(., "Employee Discount")]`);
+    
+    const isVisible = await
+     employeeDiscountBadge.isVisible();
+    log.info(`Employee Discount applied: ${isVisible}`);
+    if (isVisible) {
+        log.info(`Discount value: ${await employeeDiscountBadge.locator('span').nth(1).innerText()}`);
+    }
     return isVisible;
   }
 
@@ -158,33 +207,30 @@ export class CartPage {
   }
 
   async clickProceedToCheckout() {
-    console.log('Proceeding to checkout...');
+    log.info('Proceeding to checkout...');
     await this.proceedToCheckoutButton.scrollIntoViewIfNeeded();
     const isEnabled = await this.proceedToCheckoutButton.isEnabled();
     if (isEnabled) {
       await this.proceedToCheckoutButton.click();
-      console.log('✅ Proceed to checkout button is enabled and clicked');
+      log.success('✅ Proceed to checkout button is enabled and clicked');
     } else {
-      console.log('❌ Proceed to checkout button is disabled');
+      log.error('❌ Proceed to checkout button is disabled');
     }
   }
   async clickOrderAsGift() {
-    console.log('Order as gift...');
+    log.info('Order as gift...');
     await this.orderAsGiftButton.scrollIntoViewIfNeeded();
     const isEnabled = await this.orderAsGiftButton.isEnabled();
     if (isEnabled) {
       await this.orderAsGiftButton.click();
-      console.log('✅ Order as a gift button is enabled and clicked');
+      log.success('✅ Order as a gift button is enabled and clicked');
     } else {
-      console.log('❌ Order as a gift button is disabled');
+      log.error('❌ Order as a gift button is disabled');
     }
     await this.page.waitForLoadState('load');
   }
 
-
-
-
-  //hhhhhhhhhhhhhhhhhhhhhhhh
+  // hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
   async selectProductById(productId) {
   try {
     // Step 1: Wait for page to be stable
@@ -236,14 +282,14 @@ export class CartPage {
     await this.waitForLoadingToFinish();
     await this.yourTotal.waitFor({ state: 'visible', timeout: 10000 });
 
-    console.log(`✅ Successfully selected product: ${productId}`);
+    log.success(`✅ Successfully selected product: ${productId}`);
     
   } catch (error) {
-    console.error(`❌ Error selecting product ${productId}:`, error.message);
+    log.error(`❌ Error selecting product ${productId}: ${error.message}`);
     
     // Debug information
-    console.log('Page closed?', this.page.isClosed());
-    console.log('Current URL:', this.page.url());
+    log.info(`Page closed? ${this.page.isClosed()}`);
+    log.info(`Current URL: ${this.page.url()}`);
     
     throw error;
   }
@@ -256,9 +302,6 @@ async clickWithRetry(locator, maxRetries = 3) {
       // Wait for element to be visible and stable
       await locator.waitFor({ state: 'visible', timeout: 10000 });
       
-      // Wait a bit for any animations to complete
-      await this.page.waitForTimeout(300);
-      
       // Try to click
       await locator.click({ 
         timeout: 10000,
@@ -269,15 +312,12 @@ async clickWithRetry(locator, maxRetries = 3) {
       return;
       
     } catch (error) {
-      console.log(`Click attempt ${i + 1} failed: ${error.message}`);
+      log.warn(`Click attempt ${i + 1} failed: ${error.message}`);
       
       if (i === maxRetries - 1) {
         // Last attempt failed, throw error
         throw new Error(`Failed to click after ${maxRetries} attempts: ${error.message}`);
       }
-      
-      // Wait before retry
-      await this.page.waitForTimeout(1000);
     }
   }
 }
@@ -303,7 +343,7 @@ async waitForLoadingToFinish() {
       timeout: 10000 
     }).catch(() => {
       // Ignore timeout, continue anyway
-      console.log('Network idle timeout, continuing...');
+      log.warn('Network idle timeout, continuing...');
     });
     
     // Small buffer for DOM to stabilize
@@ -311,8 +351,7 @@ async waitForLoadingToFinish() {
     
   } catch (error) {
     // If waiting for loading fails, continue anyway after a delay
-    console.log('Loading wait issue:', error.message);
-    await this.page.waitForTimeout(1000);
+    log.warn(`Loading wait issue: ${error.message}`);
   }
 }
 

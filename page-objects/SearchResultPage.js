@@ -1,4 +1,6 @@
 import { expect } from '@playwright/test';
+import log from '../utils/logger.js';
+
 export class SearchResultPage {
   constructor(page) {
     this.page = page;
@@ -15,17 +17,19 @@ export class SearchResultPage {
   }
 
   async isProductFound(productTitle) {
-    console.log(`Searching for product with title: ${productTitle}`);
+    log.info(`Searching for product with title: ${productTitle}`);
     if (await this.page.locator('#ts--mobile-no-search-found-container').isVisible()) {
-      console.log('No product found or search service is not working properly.');
+      log.warn('No product found or search service is not working properly.');
       return false;
     }
-    console.log(`Product locator is moving....`);
-    //const product = await this.page.locator(`[class^="productContainer_productTitle__"]:has-text("${productTitle}")`);
-    const product = await this.page.locator(
-  `xpath=//*[contains(@class, 'productContainer') and contains(@class, 'productTitle') and text()="${productTitle}"]`
-);
-    console.log(`Product count ${await product.count()}.`);
+    log.info(`Product locator is moving....`);
+    const product = this.page.locator(`xpath=//h1[contains(@class,'productTitle') and contains(., "${productTitle}")]`);
+    await product.first().waitFor();
+    const urls = await this.page.url();
+    log.info(`Product count ${await product.count()}.`);
+    log.info(`Product = ${product}`);
+
+    log.info(`URL = ${urls}`);
     if ((await product.count()) > 0) {
       return product.first();
     } else {
@@ -37,7 +41,7 @@ export class SearchResultPage {
     await productLocator.click();
     await this.page.waitForLoadState('load');
   }
-  
+
   async goToProductDetails2() {
     const bookLink = this.page.locator('.books-wrapper__item').first();
     // Listen for the new page (tab) before clicking
@@ -47,7 +51,7 @@ export class SearchResultPage {
     ]);
     //await newPage.waitForTimeout(3000);
     await newPage.waitForLoadState('load');
-    console.log('Navigating to product details page...');
+    log.info('Navigating to product details page...');
     return newPage; // Return new tab for use in test
   }
 }

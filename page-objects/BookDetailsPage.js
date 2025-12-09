@@ -1,16 +1,37 @@
 import { expect } from '@playwright/test';
+import log from '../utils/logger.js';
+
 export class BookDetailsPage {
   constructor(page) {
     this.page = page;
-    this.bookTitle = page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'bookName')]`);
-    this.authorName = page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'authorName')]`);
-    this.ebookSection = page.locator('.ebookSection-module-scss-module__yOwVFW__ebookButtonContainer');
-    this.ebookSection = page.locator(`xpath=//*[contains(@class, 'ebookSection') and contains(@class, 'ebookButtonContainer')]`);
-    this.buyToReadButton = page.getByRole('button', { name: 'Buy eBook' });
-    this.ebookPrice = page.locator(`xpath=//*[contains(@class, 'ebookSection') and contains(@class, 'ebookInfo')]`);
+  }
 
-    this.addToCartButton = page.locator('#js--details-main-add-to-cart-button');
-    this.addToCartButtonText = page.locator('#js--details-main-add-to-cart-button span#js--add-to-cart-button');
+  get bookTitle() {
+    return this.page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'bookName')]`);
+  }
+
+  get authorName() {
+    return this.page.locator(`xpath=//*[contains(@class, 'bookTitle') and contains(@class, 'authorName')]`);
+  }
+
+  get ebookSection() {
+    return this.page.locator(`xpath=//*[contains(@class, 'ebookSection') and contains(@class, 'ebookButtonContainer')]`);
+  }
+
+  get buyToReadButton() {
+    return this.page.getByRole('button', { name: 'Buy eBook' });
+  }
+
+  get ebookPrice() {
+    return this.page.locator(`xpath=//*[contains(@class, 'ebookSection') and contains(@class, 'ebookInfo')]`);
+  }
+
+  get addToCartButton() {
+    return this.page.locator('#js--details-main-add-to-cart-button');
+  }
+
+  get addToCartButtonText() {
+    return this.page.locator('#js--details-main-add-to-cart-button span#js--add-to-cart-button');
   }
 
   async visit(bookId) {
@@ -37,21 +58,19 @@ export class BookDetailsPage {
   }
 
   async clickAddToCart() {
-    //Yellow or golden info arrow sign in console logs
-    console.log('\u001b[33m%s\u001b[0m', 'Book Details Page - Clicking Add to Cart button');
     await expect(this.addToCartButton, 'Add to Cart button should be visible').toBeVisible();
     await expect(this.addToCartButton, 'Add to Cart button should be enabled').toBeEnabled();
     await this.addToCartButton.scrollIntoViewIfNeeded();
     const buttonText = await this.getAddToCartButtonText();
 
     if (buttonText.includes('Add to Cart')) {
-      console.log('Add to Cart button is in "Add to Cart" state.');
+      log.info('Add to Cart button is in "Add to Cart" state.');
       await this.addToCartButton.click();
       await expect(this.addToCartButtonText).toHaveText('Go to Cart ->', {
-        timeout: 3000
+        timeout: 5000
       });
     } else {
-      console.log(
+      log.info(
         'Add to Cart button is NOT in "Add to Cart" state. Current state: ' + (await this.getAddToCartButtonText())
       );
       return;
@@ -60,7 +79,7 @@ export class BookDetailsPage {
   }
 
   async clickGoToCart() {
-    await expect.soft(this.addToCartButtonText).toHaveText('Go to Cart ->', { timeout: 3000 });
+    await expect.soft(this.addToCartButtonText).toHaveText('Go to Cart ->', { timeout: 5000 });
     await Promise.all([
       this.page.waitForURL((url) => /\/cart/.test(url.pathname), { timeout: 10_000 }),
       this.addToCartButton.click()

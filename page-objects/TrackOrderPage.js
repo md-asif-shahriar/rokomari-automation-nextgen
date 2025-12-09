@@ -1,11 +1,21 @@
 import { expect } from '@playwright/test';
+import log from '../utils/logger.js';
+
 export class TrackOrderPage {
   constructor(page) {
     this.page = page;
-    this.orderNumber = page.getByRole('heading', { name: 'Order No:' });
-    this.payableTotal = page.locator('.total-payable__value');
-    //this.orderNumber = page.locator('p:has-text("অর্ডার নম্বর")');
-    this.trackOrderButton = page.getByRole('link', { name: 'Track Your Order' });
+  }
+
+  get orderNumber() {
+    return this.page.getByRole('heading', { name: 'Order No:' });
+  }
+
+  get payableTotal() {
+    return this.page.locator('.total-payable__value');
+  }
+
+  get trackOrderButton() {
+    return this.page.getByRole('link', { name: 'Track Your Order' });
   }
 
   async getOrderNumber() {

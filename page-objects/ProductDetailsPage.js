@@ -1,10 +1,17 @@
 import { expect } from "@playwright/test";
+import log from '../utils/logger.js';
+
 export class ProductDetailsPage {
   constructor(page) {
     this.page = page;
-    this.bookTitle = page.locator(".detailsBookContainer_bookName__pLCtW");
-    this.productImage = page.locator("#js--product-image img");
-    //this.altTextElement = this.page.locator(`#js--product-image img[alt="${altText}"]`);
+  }
+
+  get bookTitle() {
+    return this.page.locator(".detailsBookContainer_bookName__pLCtW");
+  }
+
+  get productImage() {
+    return this.page.locator("#js--product-image img");
   }
 
   async waitForPageLoad() {

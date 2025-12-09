@@ -1,9 +1,17 @@
 import { expect } from '@playwright/test';
+import log from '../utils/logger.js';
+
 export class ConfirmedOrderPage {
   constructor(page) {
     this.page = page;
-    this.orderNumberLocator = page.locator('button[data-code]').first();
-    this.trackOrderButton = page.getByRole('link', { name: 'Track Your Order' });
+  }
+
+  get orderNumberLocator() {
+    return this.page.locator('button[data-code]').first();
+  }
+
+  get trackOrderButton() {
+    return this.page.getByRole('link', { name: 'Track Your Order' });
   }
 
   async getOrderNumber() {

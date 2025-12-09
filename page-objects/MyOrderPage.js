@@ -1,10 +1,21 @@
 import { expect } from '@playwright/test';
+import log from '../utils/logger.js';
+
 export class MyOrderPage {
   constructor(page) {
     this.page = page;
-    this.orderCards = page.locator('[class*="mySectionCardContainer"] > div.py-5.border-b');
-    this.orderStatus = page.locator('.order-status').first();
-    this.trackMyOrderButton = page.getByRole('link', { name: 'Track My Order' }).first();
+  }
+
+  get orderCards() {
+    return this.page.locator('[class*="mySectionCardContainer"] > div.py-5.border-b');
+  }
+
+  get orderStatus() {
+    return this.page.locator('.order-status').first();
+  }
+
+  get trackMyOrderButton() {
+    return this.page.getByRole('link', { name: 'Track My Order' }).first();
   }
 
   async isOrderFound(orderId) {
@@ -12,8 +23,8 @@ export class MyOrderPage {
     try {
       await expect(orderIdSpan, `Order ID ${orderId} should be found in My Orders`).toBeVisible({ timeout: 3000 });
     } catch (error) {
-      console.log(`Order ID ${orderId} not found in My Orders.`);
-      console.log(error.message);
+      log.error(`Order ID ${orderId} not found in My Orders.`);
+      log.error(error.message);
       return false;
     }
     return true;
