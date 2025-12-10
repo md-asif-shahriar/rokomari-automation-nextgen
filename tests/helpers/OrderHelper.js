@@ -6,12 +6,12 @@ import { BookDetailsPage } from '../../page-objects/BookDetailsPage';
 import { SearchResultPage } from '../../page-objects/SearchResultPage';
 import { CartPage } from '../../page-objects/CartPage';
 import { PaymentPage } from '../../page-objects/PaymentPage';
-import { EbookPaymentPage } from '../../page-objects/EbookPaymentPage';
 import { ConfirmedOrderPage } from '../../page-objects/ConfirmedOrderPage';
 import { TrackOrderPage } from '../../page-objects/TrackOrderPage';
 import { MyOrderPage } from '../../page-objects/MyOrderPage';
 import { CommonOptions } from '../../page-objects/CommonOptions';
 import { OnlinePaymentPage } from '../../page-objects/OnlinePayment.js';
+import { GiftVoucherPage } from '../../page-objects/GiftVoucherPage';
 import log from '../../utils/logger.js';
 
 export default class OrderHelper {
@@ -25,12 +25,12 @@ export default class OrderHelper {
     this.bookDetailsPage = new BookDetailsPage(page);
     this.cartPage = new CartPage(page);
     this.paymentPage = new PaymentPage(page);
-    this.ebookPaymentPage = new EbookPaymentPage(page);
     this.confirmedOrderPage = new ConfirmedOrderPage(page);
     this.trackOrderPage = new TrackOrderPage(page);
     this.myOrderPage = new MyOrderPage(page);
     this.commonOptions = new CommonOptions(page);
     this.onlinePaymentPage = new OnlinePaymentPage(page);
+    this.giftVoucherPage = new GiftVoucherPage(page);
 
     // Page titles
     this.titles = testData.titles;
@@ -123,9 +123,14 @@ export default class OrderHelper {
     }
     else if(type === 'voucher'){
       log.step('In gift voucher page');
-      await this.giftVoucherPage.giftVoucherOrder();
-      await this.giftVoucher.clickOrder();
-      await expect.soft(this.page).toHaveTitle(this.titles.giftVoucherPage);
+      await this.giftVoucherPage.verifyDefaultSelections();
+      const totalValue = await this.giftVoucherPage.getTotalValue();
+      log.info(`Total value: ${totalValue}`);
+      this.state.payableTotal = totalValue;
+      await this.giftVoucherPage.clickOrder();
+      await this.page.waitForLoadState('load');
+      await expect.soft(this.page).toHaveTitle(this.titles.paymentPage);
+      log.success('Gift voucher payment page loads successfully');
     }
   }
 
@@ -156,6 +161,22 @@ export default class OrderHelper {
     await expect.soft(this.page).toHaveTitle(this.titles.paymentPage);
     log.success('Payment page loads successfully');
     //await this.page.pause();
+  }
+
+  // Process Gift Voucher Order
+  async processGiftVoucherOrder(email = 'test@example.com', name = 'Test Recipient', message = 'Test gift voucher message') {
+    log.step('In gift voucher payment page');
+    
+    // Verify gift voucher form is visible
+    await this.paymentPage.verifyGiftVoucherForm();
+    
+    // Fill the gift voucher form
+    await this.paymentPage.fillGiftVoucherForm(email, name, message);
+    
+    // Verify totals match state
+    await this.paymentPage.verifyGiftVoucherTotals(this.state.payableTotal);
+    
+    log.success('Gift voucher order form processed successfully');
   }
 
   async selectProduct(productId) {
@@ -260,8 +281,7 @@ export default class OrderHelper {
     log.step('In payment page');
     log.info(`Selecting payment method for ebook: ${paymentMethod}`);
     this.state.paymentMethod = paymentMethod;
-    // Only use ebookPaymentPage as it should handle ebook payments
-    await this.ebookPaymentPage.selectPaymentMethod(paymentMethod);
+    await this.paymentPage.selectPaymentMethod(paymentMethod);
   }
 
   // Helper to extract order ID from URL
@@ -286,24 +306,22 @@ export default class OrderHelper {
     }
   }
 
-  // Confirm Order (Unified for both Regular and Ebook)
+  // Confirm Order (Unified for all order types: Normal, Gift, Ebook, Voucher)
   async confirmOrder(isEbook = false) {
-    const pageObject = isEbook ? this.ebookPaymentPage : this.paymentPage;
-
-    // Verify totals before confirming
+    // Verify totals before confirming (ebook doesn't have payable total row)
     if (!isEbook) {
-      const payableTotal = await pageObject.getPayableTotal();
+      const payableTotal = await this.paymentPage.getPayableTotal();
       log.info(`Payable Total in payment page: ${payableTotal}`);
       expect.soft(payableTotal, 'Payable total should be same in payment page').toBe(this.state.payableTotal);
     }
 
-    const confirmOrderButtonTotal = await pageObject.getConfimmOrderButtonTotal();
+    const confirmOrderButtonTotal = await this.paymentPage.getConfimmOrderButtonTotal();
     expect
       .soft(confirmOrderButtonTotal, 'Confirm order button amount should be same in payment page')
       .toBe(this.state.payableTotal);
 
     log.info('Clicking confirm order');
-    await pageObject.confirmOrder();
+    await this.paymentPage.confirmOrder();
 
     // Extract Order ID
     await this._extractOrderIdFromUrl();

@@ -105,7 +105,7 @@ test.describe('Master Order Flow', () => {
     await helper.cancelTestOrder();
   });
 
-   test.only('Order as gift (Bkash)', async ({ page }) => {
+   test('Order as gift (Bkash)', async ({ page }) => {
     await prepareOrder(helper, true);
     await helper.orderAsGift();
     await helper.selectPaymentMethod(paymentMethodBkash);
@@ -129,11 +129,12 @@ test.describe('Master Order Flow', () => {
     await helper.cancelTestOrder();
   });
 
-  test('Gift Voucher Order (Nagad)', async ({ page }) => {
+  test.only('Gift Voucher Order (Nagad)', async ({ page }) => {
     await helper.openHomePage();
     await helper.signIn(email, password, 'home');
     await helper.searchForABook('gift voucher', 'Rokomari Voucher');
     await helper.bookDetails('voucher');
+    await helper.processGiftVoucherOrder('test@example.com', 'Test Recipient', 'Test gift voucher message');
     await helper.selectPaymentMethod(paymentMethodNagad);
     await helper.confirmOrder();
     await helper.handleOnlinePaymentGateway();
