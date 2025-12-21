@@ -39,6 +39,12 @@ export class BookDetailsPage {
     await this.page.waitForLoadState('load');
   }
 
+  async getBookIdFromUrl() {
+    const currentUrl = this.page.url(); // e.g. /book/195175/bela-furabar-age
+    const match = currentUrl.match(/\/book\/(\d+)\b/);
+    return match ? match[1] : null;
+  }
+
   async getTitle() {
     return await this.page.title();
   }
@@ -51,6 +57,12 @@ export class BookDetailsPage {
   async getAuthorName() {
     const author = await this.authorName?.innerText();
     return author.replace(/^by\s+/i, '').trim();
+  }
+
+  async getBookIdFromUrl() {
+    const currentUrl = this.page.url(); // expected: /book/{id}/{slug}
+    const match = currentUrl.match(/\/book\/(\d+)\b/);
+    return match ? match[1] : null;
   }
 
   async getAddToCartButtonText() {
@@ -86,6 +98,29 @@ export class BookDetailsPage {
     ]);
     await this.page.waitForLoadState('load');
     expect(this.page.url()).toMatch(/\/cart/);
+  }
+
+  async clickPreOrderAndGoToCart() {
+    await expect(this.addToCartButton, 'Pre Order button should be visible').toBeVisible();
+    await this.addToCartButton.scrollIntoViewIfNeeded();
+
+    const buttonText = await this.getAddToCartButtonText();
+
+    // For pre-order flow the button should show "Pre Order" initially
+    await expect.soft(
+      buttonText,
+      'Pre Order button text should contain "Pre Order"'
+    ).toContain('Pre Order');
+
+    await this.addToCartButton.click();
+
+    // After click it should change to Go to Cart
+    await expect
+      .soft(this.addToCartButtonText, 'Button text should change to "Go to Cart" after pre-order')
+      .toHaveText('Go to Cart ->', { timeout: 5000 });
+
+    // Now navigate to cart
+    await this.clickGoToCart();
   }
 
   async getEbookPrice() {

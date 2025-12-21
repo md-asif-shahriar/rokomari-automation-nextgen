@@ -12,6 +12,7 @@ import { MyOrderPage } from '../../page-objects/MyOrderPage';
 import { CommonOptions } from '../../page-objects/CommonOptions';
 import { OnlinePaymentPage } from '../../page-objects/OnlinePayment.js';
 import { GiftVoucherPage } from '../../page-objects/GiftVoucherPage';
+import { BrowsePage } from '../../page-objects/BrowsePage';
 import log from '../../utils/logger.js';
 
 export default class OrderHelper {
@@ -31,6 +32,7 @@ export default class OrderHelper {
     this.commonOptions = new CommonOptions(page);
     this.onlinePaymentPage = new OnlinePaymentPage(page);
     this.giftVoucherPage = new GiftVoucherPage(page);
+    this.browsePage = new BrowsePage(page);
 
     // Page titles
     this.titles = testData.titles;
@@ -48,7 +50,8 @@ export default class OrderHelper {
       payableTotal: null,
       paymentMethod: null,
       orderId: null,
-      orderStatus: null
+      orderStatus: null,
+      productId: null
     };
   }
 
@@ -120,8 +123,23 @@ export default class OrderHelper {
       log.step('In book details page');
       log.info(`Book Title: ${await this.bookDetailsPage.getBookTitle()}`);
       log.info(`Author Name: ${await this.bookDetailsPage.getAuthorName()}`);
+      this.state.productId = await this.bookDetailsPage.getBookIdFromUrl();
+      log.info(`Captured product id from URL: ${this.state.productId}`);
     }
-    else if(type === 'voucher'){
+    else if (type === 'pre-order') {
+      log.step('In pre-order page');
+      this.state.productId = await this.bookDetailsPage.getBookIdFromUrl();
+      log.info(`Current book id from URL: ${this.state.productId}`);
+
+      // Click pre-order button and go to cart
+      await this.bookDetailsPage.clickPreOrderAndGoToCart();
+
+      // Ensure cart page is loaded
+      await this.page.waitForLoadState('load');
+      await expect.soft(this.page).toHaveTitle(this.titles.cartPage);
+      log.success('Cart page loads successfully after pre-order');
+    }
+    else if (type === 'voucher') {
       log.step('In gift voucher page');
       await this.giftVoucherPage.verifyDefaultSelections();
       const totalValue = await this.giftVoucherPage.getTotalValue();
@@ -166,22 +184,50 @@ export default class OrderHelper {
   // Process Gift Voucher Order
   async processGiftVoucherOrder(email = 'test@example.com', name = 'Test Recipient', message = 'Test gift voucher message') {
     log.step('In gift voucher payment page');
-    
+
     // Verify gift voucher form is visible
     await this.paymentPage.verifyGiftVoucherForm();
-    
+
     // Fill the gift voucher form
     await this.paymentPage.fillGiftVoucherForm(email, name, message);
-    
+
     // Verify totals match state
     await this.paymentPage.verifyGiftVoucherTotals(this.state.payableTotal);
-    
+
     log.success('Gift voucher order form processed successfully');
+  }
+
+  // Pre-order: open pre-order listing, pick first book and navigate to cart
+  async preOrderFirstBook() {
+    log.step('Starting pre-order flow');
+
+    // Open pre-order listing and click first book
+    await this.browsePage.openPreOrderListing();
+    await this.browsePage.openFirstPreOrderBook();
+
+    // We should now be on book details page
+    await expect.soft(this.page).toHaveTitle(this.titles.bookDetailsPage);
+    log.success('Pre-order book details page loads successfully');
+
+    this.state.productId = await this.bookDetailsPage.getBookIdFromUrl();
+    log.info(`Current book id from URL: ${this.state.productId}`);
+
+    // Click pre-order button and go to cart
+    await this.bookDetailsPage.clickPreOrderAndGoToCart();
+
+    // Ensure cart page is loaded
+    await this.page.waitForLoadState('load');
+    await expect.soft(this.page).toHaveTitle(this.titles.cartPage);
+    log.success('Cart page loads successfully after pre-order');
   }
 
   async selectProduct(productId) {
     log.step('In cart page');
-    await this.cartPage.selectProductById(productId);
+    const idToUse = productId ?? this.state.productId;
+    if (!idToUse) {
+      throw new Error('No productId available to select. Ensure bookDetails() or preOrder flow captured it.');
+    }
+    await this.cartPage.selectProductById(idToUse);
     //await this.page.pause();
   }
 
@@ -258,11 +304,11 @@ export default class OrderHelper {
     const isGiftWrapChanged = await this.paymentPage.toggleGiftWrap(true);
 
     // Update payable total for gift wrap
-    if(isGiftWrapChanged){
-    let base = Number(this.state.payableTotal.replace(/[^\d.]/g, '').trim());
-    let updated = base + 20;
-    this.state.payableTotal = `৳${updated}`;
-    log.info(`New Payable Total after gift wrap: ${this.state.payableTotal}`);
+    if (isGiftWrapChanged) {
+      let base = Number(this.state.payableTotal.replace(/[^\d.]/g, '').trim());
+      let updated = base + 20;
+      this.state.payableTotal = `৳${updated}`;
+      log.info(`New Payable Total after gift wrap: ${this.state.payableTotal}`);
     }
     await this.page.pause();
   }

@@ -18,7 +18,6 @@ let searchKeyword = testData.searchKeyword;
 let countryBD = testData.localAddress.countryBD;
 let countryIndia = testData.localAddress.countryIndia;
 
-let productId = testData.cartProductId;
 let productTitle = testData.productTitle;
 
 let searchKeywordEbook = testData.searchKeywordEbook;
@@ -34,7 +33,7 @@ async function prepareOrder(helper, signIn = true, country = countryBD) {
   await helper.bookDetails();
   await helper.addToCart();
   await helper.goToCart();
-  await helper.selectProduct(productId);
+  await helper.selectProduct();
   
   // Only select shipping address if signed in, as address selection requires login
   if (signIn) {
@@ -80,7 +79,7 @@ test.describe('Master Order Flow', () => {
     
     // After login, we might need to select product again if session didn't persist selection perfectly
     // or just proceed. Based on original test, it selects product again.
-    await helper.selectProduct(productId);
+    await helper.selectProduct();
     await helper.selectShippingAddress(countryBD);
     await helper.proceedToCheckout();
     
@@ -129,7 +128,7 @@ test.describe('Master Order Flow', () => {
     await helper.cancelTestOrder();
   });
 
-  test.only('Gift Voucher Order (Nagad)', async ({ page }) => {
+  test('Gift Voucher Order (Nagad)', async ({ page }) => {
     await helper.openHomePage();
     await helper.signIn(email, password, 'home');
     await helper.searchForABook('gift voucher', 'Rokomari Voucher');
@@ -149,7 +148,7 @@ test.describe('Master Order Flow', () => {
     await prepareOrder(helper, false);
     await helper.proceedToCheckout();
     await helper.signIn(email, password, 'cart');
-    await helper.selectProduct(productId);
+    await helper.selectProduct();
     await helper.selectShippingAddress(countryIndia);
     await helper.proceedToCheckout();
     await helper.selectPaymentMethod(paymentMethodCard);
@@ -166,6 +165,25 @@ test.describe('Master Order Flow', () => {
     await prepareOrder(helper, true);
     await helper.proceedToCheckout();
     await helper.selectPaymentMethod(paymentMethodRocket);
+    await helper.confirmOrder();
+    await helper.confirmedOrderPageInfo();
+    await helper.trackOrder();
+    await helper.myOrder();
+    await helper.cancelTestOrder();
+  });
+
+  test.only('Pre-order book (Rocket)', async ({ page }) => {
+    await helper.openHomePage();
+    await helper.signIn(email, password, 'home');
+
+    // Pre-order specific flow
+    await helper.preOrderFirstBook();
+
+    // Rest of the flow is similar: select address, proceed, pay with Rocket
+    await helper.selectShippingAddress(countryBD);
+    await helper.proceedToCheckout();
+    await helper.selectPaymentMethod(paymentMethodRocket);
+    await page.pause();
     await helper.confirmOrder();
     await helper.confirmedOrderPageInfo();
     await helper.trackOrder();
